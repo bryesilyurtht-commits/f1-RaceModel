@@ -1,0 +1,90 @@
+Season,Race,age_spread,status,n_laps
+2022,Abu Dhabi Grand Prix,5.6976000087203325,ok,1016
+2022,Australian Grand Prix,5.990836017430554,ok,767
+2022,Austrian Grand Prix,5.255953192341493,ok,815
+2022,Azerbaijan Grand Prix,6.551515965640446,ok,725
+2022,Bahrain Grand Prix,,too few usable laps,734
+2022,Belgian Grand Prix,,too few laps,587
+2022,British Grand Prix,5.45305653718354,ok,621
+2022,Canadian Grand Prix,8.475930796295641,ok,994
+2022,Dutch Grand Prix,5.292344081573935,ok,941
+2022,Emilia Romagna Grand Prix,2.655224083908808,ok,710
+2022,French Grand Prix,0.9487173322315441,ok,778
+2022,Hungarian Grand Prix,6.322930551163408,ok,1127
+2022,Italian Grand Prix,5.268845178870725,ok,712
+2022,Mexico City Grand Prix,6.954729980535827,ok,1277
+2022,Miami Grand Prix,5.964442326832559,ok,729
+2022,Monaco Grand Prix,4.625843202856754,ok,446
+2022,Saudi Arabian Grand Prix,5.139839715463674,ok,579
+2022,Singapore Grand Prix,,too few laps,256
+2022,Spanish Grand Prix,5.339920931113564,ok,1038
+2022,São Paulo Grand Prix,4.803161600298091,ok,803
+2022,United States Grand Prix,4.1565530724554325,ok,642
+2023,Abu Dhabi Grand Prix,5.523918483229709,ok,1055
+2023,Australian Grand Prix,2.733976354767121,ok,676
+2023,Austrian Grand Prix,5.184495835455601,ok,1163
+2023,Azerbaijan Grand Prix,4.347888153029796,ok,789
+2023,Bahrain Grand Prix,3.3798374055442784,ok,867
+2023,Belgian Grand Prix,3.5385326676611233,ok,641
+2023,British Grand Prix,2.786907227597673,ok,787
+2023,Canadian Grand Prix,7.501037691130857,ok,1033
+2023,Dutch Grand Prix,8.066373402929583,ok,723
+2023,Hungarian Grand Prix,5.877022811975055,ok,1140
+2023,Italian Grand Prix,5.127332348932153,ok,878
+2023,Japanese Grand Prix,5.393999085582762,ok,582
+2023,Las Vegas Grand Prix,4.299530862203421,ok,549
+2023,Mexico City Grand Prix,3.0956412835319167,ok,1031
+2023,Miami Grand Prix,7.699206348722348,ok,1073
+2023,Monaco Grand Prix,6.77818579987455,ok,912
+2023,Qatar Grand Prix,,too few laps,761
+2023,Saudi Arabian Grand Prix,3.6633845328608237,ok,818
+2023,Singapore Grand Prix,2.989734398525639,ok,797
+2023,Spanish Grand Prix,6.247933529828258,ok,1204
+2023,São Paulo Grand Prix,4.78494819335993,ok,967
+2023,United States Grand Prix,4.299838114361181,ok,903
+2024,Abu Dhabi Grand Prix,6.365509204989561,ok,877
+2024,Australian Grand Prix,5.309675970230433,ok,824
+2024,Austrian Grand Prix,5.13174575039773,ok,1244
+2024,Azerbaijan Grand Prix,5.920892987201003,ok,853
+2024,Bahrain Grand Prix,3.9267114363128064,ok,1006
+2024,Belgian Grand Prix,5.209270694458128,ok,726
+2024,British Grand Prix,0.0,ok,623
+2024,Canadian Grand Prix,,too few laps,76
+2024,Chinese Grand Prix,3.0185279605528854,ok,676
+2024,Dutch Grand Prix,7.133201461347934,ok,1353
+2024,Emilia Romagna Grand Prix,7.119059510545509,ok,1154
+2024,Hungarian Grand Prix,6.303987415580758,ok,1193
+2024,Italian Grand Prix,6.273999472572185,ok,918
+2024,Japanese Grand Prix,4.579878308465296,ok,742
+2024,Las Vegas Grand Prix,4.699930861877818,ok,830
+2024,Mexico City Grand Prix,7.6356167251137785,ok,1048
+2024,Miami Grand Prix,4.697852537294964,ok,920
+2024,Monaco Grand Prix,9.678135314172222,ok,1146
+2024,Qatar Grand Prix,1.7506578656713445,ok,666
+2024,Saudi Arabian Grand Prix,4.169713994781278,ok,737
+2024,Singapore Grand Prix,5.9496306625164275,ok,1105
+2024,Spanish Grand Prix,5.1089465725212255,ok,1205
+2024,United States Grand Prix,6.76491292429588,ok,856
+2025,Abu Dhabi Grand Prix,7.285313820437403,ok,1077
+2025,Austrian Grand Prix,6.772928320737,ok,995
+2025,Azerbaijan Grand Prix,7.31533557797429,ok,761
+2025,Bahrain Grand Prix,3.1184910665839216,ok,962
+2025,Belgian Grand Prix,2.2185352808281475,ok,531
+2025,British Grand Prix,,too few laps,124
+2025,Canadian Grand Prix,9.55036933256472,ok,1162
+2025,Chinese Grand Prix,6.361071303582002,ok,915
+2025,Dutch Grand Prix,4.8456934191846575,ok,826
+2025,Emilia Romagna Grand Prix,3.864722040210436,ok,862
+2025,Hungarian Grand Prix,7.426327143629036,ok,1286
+2025,Italian Grand Prix,7.406708692334558,ok,891
+2025,Japanese Grand Prix,4.840100343855794,ok,997
+2025,Las Vegas Grand Prix,6.174043835291991,ok,760
+2025,Mexico City Grand Prix,6.64947797616567,ok,1105
+2025,Miami Grand Prix,2.9785030340186753,ok,474
+2025,Monaco Grand Prix,11.309075141900308,ok,1073
+2025,Qatar Grand Prix,2.7077726180771213,ok,828
+2025,Saudi Arabian Grand Prix,6.563872076992871,ok,809
+2025,Singapore Grand Prix,7.333730002632039,ok,1122
+2025,Spanish Grand Prix,5.4306252284038585,ok,881
+2025,São Paulo Grand Prix,8.039948443621475,ok,968
+2025,United States Grand Prix,4.138708358074477,ok,918

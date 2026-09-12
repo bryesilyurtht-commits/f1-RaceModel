@@ -1,0 +1,7 @@
+# Extra dependency for rebuilding the data rather than using what is
+# committed. Only fetch.py, dataset.py, track_features.py, track_history.py
+# and the speed-trap half of overtake_speed.py need it.
+#
+#     pip install -r requirements.txt -r requirements-pipeline.txt
+
+fastf1>=3.4

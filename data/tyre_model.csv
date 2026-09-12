@@ -1,0 +1,73 @@
+Race,Compound,k,W,m,cliff_lap,source,note
+Abu Dhabi Grand Prix,SOFT,0.03491,0.2,1.5,5.7,derived:MEDIUM,MEDIUM k x 0.613
+Abu Dhabi Grand Prix,MEDIUM,0.057,2.5,2.25,43.9,measured,
+Abu Dhabi Grand Prix,HARD,0.029,0.2,1.0,6.9,measured,
+Australian Grand Prix,SOFT,0.0441,0.2,1.5,4.5,derived:MEDIUM,MEDIUM k x 0.613
+Australian Grand Prix,MEDIUM,0.072,2.5,2.25,34.7,measured,
+Australian Grand Prix,HARD,0.021,0.2,1.0,9.5,measured,
+Austrian Grand Prix,SOFT,0.02818,0.2,1.5,7.1,derived:MEDIUM,MEDIUM k x 0.613
+Austrian Grand Prix,MEDIUM,0.046,2.5,2.25,54.3,measured,
+Austrian Grand Prix,HARD,0.051,0.2,1.0,3.9,measured,
+Azerbaijan Grand Prix,SOFT,0.01348,0.2,1.5,14.8,derived:MEDIUM,MEDIUM k x 0.613
+Azerbaijan Grand Prix,MEDIUM,0.022,2.5,2.25,113.6,measured,
+Azerbaijan Grand Prix,HARD,0.013,0.2,1.0,15.4,measured,
+Bahrain Grand Prix,SOFT,0.064,0.2,1.5,3.1,measured,
+Bahrain Grand Prix,MEDIUM,0.0405,2.5,2.25,61.7,global,calendar-wide median
+Bahrain Grand Prix,HARD,0.082,0.2,1.0,2.4,measured,
+Belgian Grand Prix,SOFT,0.05451,0.2,1.5,3.7,derived:MEDIUM,MEDIUM k x 0.613
+Belgian Grand Prix,MEDIUM,0.089,2.5,2.25,28.1,measured,
+Belgian Grand Prix,HARD,0.034,0.2,1.0,5.9,measured,
+British Grand Prix,SOFT,0.05451,0.2,1.5,3.7,borrowed:Belgian Grand Prix,"measured slope implausibly flat; few clean laps, short race, wet/SC heavy history. Spa matched on lateral load and abrasion."
+British Grand Prix,MEDIUM,0.089,2.5,2.25,28.1,borrowed:Belgian Grand Prix,"measured slope implausibly flat; few clean laps, short race, wet/SC heavy history. Spa matched on lateral load and abrasion."
+British Grand Prix,HARD,0.034,0.2,1.0,5.9,borrowed:Belgian Grand Prix,"measured slope implausibly flat; few clean laps, short race, wet/SC heavy history. Spa matched on lateral load and abrasion."
+Canadian Grand Prix,SOFT,0.024,0.2,1.5,8.3,global,calendar-wide median
+Canadian Grand Prix,MEDIUM,0.0405,2.5,2.25,61.7,global,calendar-wide median
+Canadian Grand Prix,HARD,0.012,0.2,1.0,16.7,measured,
+Chinese Grand Prix,SOFT,0.04043,0.2,1.5,4.9,derived:MEDIUM,MEDIUM k x 0.613
+Chinese Grand Prix,MEDIUM,0.066,2.5,2.25,37.9,measured,
+Chinese Grand Prix,HARD,0.05775,0.2,1.0,3.5,derived:MEDIUM,MEDIUM k x 0.875
+Dutch Grand Prix,SOFT,0.024,0.2,1.5,8.3,measured,
+Dutch Grand Prix,MEDIUM,0.037,2.5,2.25,67.6,measured,
+Dutch Grand Prix,HARD,0.03238,0.2,1.0,6.2,derived:MEDIUM,MEDIUM k x 0.875
+Emilia Romagna Grand Prix,SOFT,0.03614,0.2,1.5,5.5,derived:MEDIUM,MEDIUM k x 0.613
+Emilia Romagna Grand Prix,MEDIUM,0.059,2.5,2.25,42.4,measured,
+Emilia Romagna Grand Prix,HARD,0.053,0.2,1.0,3.8,measured,
+Hungarian Grand Prix,SOFT,0.024,0.2,1.5,8.3,measured,
+Hungarian Grand Prix,MEDIUM,0.04,2.5,2.25,62.5,measured,
+Hungarian Grand Prix,HARD,0.035,0.2,1.0,5.7,measured,
+Italian Grand Prix,SOFT,0.01715,0.2,1.5,11.7,derived:MEDIUM,MEDIUM k x 0.613
+Italian Grand Prix,MEDIUM,0.028,2.5,2.25,89.3,measured,
+Italian Grand Prix,HARD,0.027,0.2,1.0,7.4,measured,
+Japanese Grand Prix,SOFT,0.022,0.2,1.5,9.1,measured,
+Japanese Grand Prix,MEDIUM,0.09,2.5,2.25,27.8,measured,
+Japanese Grand Prix,HARD,0.082,0.2,1.0,2.4,measured,
+Las Vegas Grand Prix,SOFT,0.01593,0.2,1.5,12.6,derived:MEDIUM,MEDIUM k x 0.613
+Las Vegas Grand Prix,MEDIUM,0.026,2.5,2.25,96.2,measured,
+Las Vegas Grand Prix,HARD,0.022,0.2,1.0,9.1,measured,
+Madrid Grand Prix,SOFT,0.024,0.2,1.5,8.3,global,calendar-wide median
+Madrid Grand Prix,MEDIUM,0.0405,2.5,2.25,61.7,global,calendar-wide median
+Madrid Grand Prix,HARD,0.032,0.2,1.0,6.2,global,calendar-wide median
+Mexico City Grand Prix,SOFT,0.012,0.2,1.5,16.7,measured,
+Mexico City Grand Prix,MEDIUM,0.026,2.5,2.25,96.2,measured,
+Mexico City Grand Prix,HARD,0.032,0.2,1.0,6.2,measured,
+Miami Grand Prix,SOFT,0.01593,0.2,1.5,12.6,derived:MEDIUM,MEDIUM k x 0.613
+Miami Grand Prix,MEDIUM,0.026,2.5,2.25,96.2,measured,
+Miami Grand Prix,HARD,0.008,0.2,1.0,25.0,measured,
+Monaco Grand Prix,SOFT,0.024,0.2,1.5,8.3,global,calendar-wide median
+Monaco Grand Prix,MEDIUM,0.0405,2.5,2.25,61.7,global,calendar-wide median
+Monaco Grand Prix,HARD,0.032,0.2,1.0,6.2,global,calendar-wide median
+Saudi Arabian Grand Prix,SOFT,0.01348,0.2,1.5,14.8,derived:MEDIUM,MEDIUM k x 0.613
+Saudi Arabian Grand Prix,MEDIUM,0.022,2.5,2.25,113.6,measured,
+Saudi Arabian Grand Prix,HARD,0.01925,0.2,1.0,10.4,derived:MEDIUM,MEDIUM k x 0.875
+Singapore Grand Prix,SOFT,0.02634,0.2,1.5,7.6,derived:MEDIUM,MEDIUM k x 0.613
+Singapore Grand Prix,MEDIUM,0.043,2.5,2.25,58.1,measured,
+Singapore Grand Prix,HARD,0.057,0.2,1.0,3.5,measured,
+Spanish Grand Prix,SOFT,0.048,0.2,1.5,4.2,measured,
+Spanish Grand Prix,MEDIUM,0.057,2.5,2.25,43.9,measured,
+Spanish Grand Prix,HARD,0.065,0.2,1.0,3.1,measured,
+São Paulo Grand Prix,SOFT,0.03,0.2,1.5,6.7,measured,
+São Paulo Grand Prix,MEDIUM,0.048,2.5,2.25,52.1,measured,
+São Paulo Grand Prix,HARD,0.086,0.2,1.0,2.3,measured,
+United States Grand Prix,SOFT,0.024,0.2,1.5,8.3,measured,
+United States Grand Prix,MEDIUM,0.021,2.5,2.25,119.0,measured,
+United States Grand Prix,HARD,0.036,0.2,1.0,5.6,measured,

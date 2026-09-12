@@ -1,0 +1,14 @@
+Race,Round,pole_time,pole_driver,is_target
+Australian Grand Prix,1,78.518,RUS,False
+Chinese Grand Prix,2,92.064,ANT,False
+Japanese Grand Prix,3,88.778,ANT,False
+Miami Grand Prix,4,87.798,ANT,False
+Canadian Grand Prix,5,72.578,RUS,False
+Monaco Grand Prix,6,72.051,ANT,False
+Barcelona Grand Prix,7,74.679,RUS,False
+Austrian Grand Prix,8,66.113,RUS,False
+British Grand Prix,9,88.111,ANT,False
+Belgian Grand Prix,10,104.361,ANT,False
+Hungarian Grand Prix,11,77.207,NOR,False
+Dutch Grand Prix,12,71.163,NOR,False
+Italian Grand Prix,13,81.786,GAS,True

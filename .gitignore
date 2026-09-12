@@ -1,0 +1,44 @@
+# FastF1's download caches. 2.7 GB between them, entirely reproducible, and
+# nothing in either is worth a git object. They refill themselves the first
+# time the pipeline runs. Two directories because different modules pointed
+# at different names over time.
+cache/
+f1cache/
+
+# Raw lap tables. These are FastF1 downloads, not results: 40 MB of them, and
+# `python -m Simülasyon.dataset --rebuild` and `python -m Simülasyon.fetch`
+# put them back. Everything the interface actually reads is small and stays
+# in the repo, so a fresh clone runs without downloading anything.
+data/laps_*.csv
+data/stint_laps.csv
+data/stint_index.csv
+data/f1_2026_laps.csv
+data/f1_2026_laps_clean.csv
+data/overtaking_events.csv
+data/tyre_age_profile*.csv
+data/stint_slopes.csv
+data/deg_by_stint.csv
+data/overtaking_events*.csv
+data/track_evolution.csv
+
+# Run outputs. Regenerated every run, and predictions.csv is kept because the
+# interface shows it before the first run of a session.
+output/*.png
+output/diagnostics.html
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+
+# Editors and OS
+.idea/
+.DS_Store
+Thumbs.db
+
+# Scratch
+Çöp/
+*.log

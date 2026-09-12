@@ -1,0 +1,26 @@
+Race,sc_lambda,sc_duration,vsc_lambda,vsc_duration,red_lambda,rf_count,rf_races,rf_lambda,category,p_any_sc,race_laps,n_seasons,n_dry
+Australian Grand Prix,2.0,3.125,1.6666666666666667,1.8333333333333333,1.0,3,4,0.75,permanent,0.6666666666666666,58,4,3
+Qatar Grand Prix,1.3333333333333333,4.833333333333333,0.0,1.5,0.0,0,3,0.0,permanent,1.0,57,3,3
+São Paulo Grand Prix,1.3333333333333333,4.166666666666667,0.6666666666666666,2.5,0.3333333333333333,2,4,0.5,permanent,1.0,71,4,3
+Dutch Grand Prix,1.3333333333333333,6.0,0.6666666666666666,4.0,0.0,1,4,0.25,permanent,0.6666666666666666,72,4,3
+Canadian Grand Prix,1.0,5.666666666666667,1.0,2.5,0.0,0,4,0.0,permanent,1.0,70,4,3
+French Grand Prix,1.0,3.0,1.0,3.0,0.0,0,1,0.0,permanent,1.0,53,1,1
+British Grand Prix,1.0,6.0,0.0,1.5,0.5,1,4,0.25,permanent,1.0,52,4,2
+Saudi Arabian Grand Prix,1.0,4.25,0.25,6.0,0.0,0,4,0.0,street,1.0,50,4,4
+Las Vegas Grand Prix,0.6666666666666666,3.5,1.0,2.25,0.0,0,3,0.0,street,0.3333333333333333,50,3,3
+Miami Grand Prix,0.5,6.0,1.0,2.5,0.0,0,4,0.0,permanent,0.5,57,4,4
+United States Grand Prix,0.5,6.5,0.25,4.0,0.0,0,4,0.0,permanent,0.5,56,4,4
+Azerbaijan Grand Prix,0.5,4.0,0.75,3.0,0.0,0,4,0.0,street,0.5,51,4,4
+Chinese Grand Prix,0.5,9.0,0.5,2.0,0.0,0,2,0.0,permanent,0.5,56,2,2
+Austrian Grand Prix,0.5,3.0,0.75,3.6666666666666665,0.0,0,4,0.0,permanent,0.5,71,4,4
+Bahrain Grand Prix,0.5,5.5,0.25,3.0,0.0,0,4,0.0,permanent,0.5,57,4,4
+Mexico City Grand Prix,0.5,5.0,0.75,3.3333333333333335,0.25,1,4,0.25,permanent,0.5,71,4,4
+Emilia Romagna Grand Prix,0.5,9.0,0.5,4.0,0.0,0,3,0.0,permanent,0.5,63,3,2
+Monaco Grand Prix,0.5,2.0,0.5,4.0,0.5,2,4,0.5,street,0.5,78,4,2
+Belgian Grand Prix,0.3333333333333333,3.0,0.0,1.5,0.0,0,4,0.0,permanent,0.3333333333333333,44,4,3
+Singapore Grand Prix,0.3333333333333333,4.0,0.3333333333333333,3.0,0.0,0,4,0.0,street,0.3333333333333333,62,4,3
+Japanese Grand Prix,0.3333333333333333,4.0,0.3333333333333333,2.0,0.3333333333333333,2,4,0.5,permanent,0.3333333333333333,53,4,3
+Spanish Grand Prix,0.25,7.0,0.0,1.5,0.0,0,4,0.0,permanent,0.25,66,4,4
+Italian Grand Prix,0.25,8.0,0.25,3.0,0.0,0,4,0.0,permanent,0.25,53,4,4
+Abu Dhabi Grand Prix,0.0,4.0,0.25,2.0,0.0,0,4,0.0,permanent,0.0,58,4,4
+Hungarian Grand Prix,0.0,4.0,0.5,3.5,0.0,0,4,0.0,permanent,0.0,70,4,4

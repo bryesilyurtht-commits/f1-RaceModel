@@ -1,0 +1,12 @@
+# What the interface needs to run. Deliberately short: fastf1 is not here,
+# because nothing the app does touches the network. Every number it reads is
+# already in data/, which is why a fresh clone starts in seconds.
+#
+# To rebuild the data instead of using what is committed, install
+# requirements-pipeline.txt as well.
+
+streamlit>=1.40
+pandas>=2.0
+numpy>=1.26
+plotly>=5.20
+matplotlib>=3.8

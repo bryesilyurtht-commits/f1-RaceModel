@@ -1,0 +1,105 @@
+Race,Compound,limit,max_stint,p95_stint,median_stint,n_stints,n_seasons,to_flag,source
+Abu Dhabi Grand Prix,HARD,43.0,45.0,43.0,26.0,103,4,0.46601941747572817,measured
+Abu Dhabi Grand Prix,MEDIUM,27.0,29.0,26.950000000000003,16.5,82,4,0.25609756097560976,measured
+Abu Dhabi Grand Prix,SOFT,24.0,25.0,23.75,13.5,6,3,0.3333333333333333,measured
+Australian Grand Prix,HARD,47.0,57.0,47.0,29.0,73,3,0.4383561643835616,measured
+Australian Grand Prix,MEDIUM,27.0,37.0,26.599999999999994,18.0,28,3,0.03571428571428571,measured
+Australian Grand Prix,SOFT,27.0,,,,28,0,,legacy-era+ordered
+Austrian Grand Prix,HARD,34.0,41.0,34.0,27.0,95,4,0.2736842105263158,measured
+Austrian Grand Prix,MEDIUM,30.0,33.0,30.0,20.0,107,4,0.2336448598130841,measured
+Austrian Grand Prix,SOFT,15.0,16.0,15.25,12.0,6,1,0.16666666666666666,measured
+Azerbaijan Grand Prix,HARD,49.0,50.0,49.0,34.0,85,4,0.5764705882352941,measured
+Azerbaijan Grand Prix,MEDIUM,27.0,37.0,26.599999999999994,12.0,65,4,0.23076923076923078,measured
+Azerbaijan Grand Prix,SOFT,17.0,12.0,12.0,12.0,33,1,1.0,legacy-era
+Bahrain Grand Prix,HARD,29.0,30.0,29.0,20.0,88,4,0.3522727272727273,measured
+Bahrain Grand Prix,MEDIUM,25.0,31.0,25.0,17.5,48,3,0.125,measured
+Bahrain Grand Prix,SOFT,22.0,25.0,22.0,14.0,103,4,0.1553398058252427,measured
+Belgian Grand Prix,HARD,27.0,34.0,27.19999999999999,18.0,40,4,0.45,measured
+Belgian Grand Prix,MEDIUM,27.0,33.0,32.0,15.0,94,4,0.3191489361702128,measured+ordered
+Belgian Grand Prix,SOFT,26.0,29.0,25.949999999999996,15.0,28,3,0.6785714285714286,measured
+British Grand Prix,HARD,27.0,32.0,27.250000000000004,18.5,20,4,0.3,measured
+British Grand Prix,MEDIUM,27.0,34.0,33.0,24.5,68,4,0.29411764705882354,measured+ordered
+British Grand Prix,SOFT,24.0,28.0,23.799999999999997,14.0,45,4,0.7555555555555555,measured
+Canadian Grand Prix,HARD,55.0,63.0,54.79999999999998,30.0,89,4,0.2808988764044944,measured
+Canadian Grand Prix,MEDIUM,31.0,39.0,30.949999999999996,16.0,62,4,0.22580645161290322,measured
+Canadian Grand Prix,SOFT,21.0,10.0,10.0,10.0,8,1,0.0,legacy-era
+Chinese Grand Prix,HARD,45.0,46.0,44.9,33.0,43,2,0.6744186046511628,measured
+Chinese Grand Prix,MEDIUM,24.0,30.0,23.75,13.5,36,2,0.16666666666666666,measured
+Chinese Grand Prix,SOFT,15.0,16.0,15.2,9.0,5,1,0.2,measured
+Dutch Grand Prix,HARD,51.0,57.0,51.25,36.5,46,4,0.34782608695652173,measured
+Dutch Grand Prix,MEDIUM,31.0,33.0,31.0,23.0,65,4,0.06153846153846154,measured
+Dutch Grand Prix,SOFT,31.0,50.0,37.19999999999999,16.0,69,4,0.2608695652173913,measured+ordered
+Emilia Romagna Grand Prix,HARD,50.0,54.0,49.599999999999994,31.0,49,3,0.4489795918367347,measured
+Emilia Romagna Grand Prix,MEDIUM,45.0,46.0,45.0,27.0,58,3,0.3448275862068966,measured
+Emilia Romagna Grand Prix,SOFT,13.0,13.0,12.8,10.0,5,2,0.8,measured
+French Grand Prix,HARD,35.0,37.0,35.0,35.0,21,1,0.5714285714285714,measured
+French Grand Prix,MEDIUM,24.0,35.0,24.0,18.0,21,1,0.14285714285714285,measured
+French Grand Prix,SOFT,24.0,,,,12,0,,legacy-era+ordered
+Hungarian Grand Prix,HARD,42.0,55.0,41.5,28.0,91,4,0.42857142857142855,measured
+Hungarian Grand Prix,MEDIUM,36.0,40.0,36.39999999999999,22.0,93,4,0.24731182795698925,measured
+Hungarian Grand Prix,SOFT,23.0,29.0,23.0,16.0,27,4,0.2962962962962963,measured
+Italian Grand Prix,HARD,43.0,51.0,42.69999999999999,26.5,74,4,0.5135135135135135,measured
+Italian Grand Prix,MEDIUM,36.0,46.0,35.599999999999994,19.0,75,4,0.2,measured
+Italian Grand Prix,SOFT,24.0,25.0,24.0,15.0,11,2,0.18181818181818182,measured
+Japanese Grand Prix,HARD,32.0,38.0,32.0,21.0,68,3,0.5882352941176471,measured
+Japanese Grand Prix,MEDIUM,30.0,33.0,29.799999999999983,21.0,45,3,0.17777777777777778,measured
+Japanese Grand Prix,SOFT,20.0,20.0,20.0,14.0,10,3,0.4,measured
+Las Vegas Grand Prix,HARD,34.0,48.0,33.95,23.5,82,3,0.524390243902439,measured
+Las Vegas Grand Prix,MEDIUM,25.0,27.0,25.15,15.5,38,3,0.15789473684210525,measured
+Las Vegas Grand Prix,SOFT,17.0,,,,0,0,,derived:MEDIUM x 0.67
+Mexico City Grand Prix,HARD,48.0,49.0,47.699999999999996,37.0,47,4,0.46808510638297873,measured
+Mexico City Grand Prix,MEDIUM,44.0,48.0,44.25,30.5,76,4,0.27631578947368424,measured
+Mexico City Grand Prix,SOFT,36.0,38.0,35.9,25.0,43,2,0.4418604651162791,measured
+Miami Grand Prix,HARD,45.0,54.0,45.0,33.0,70,4,0.5571428571428572,measured
+Miami Grand Prix,MEDIUM,29.0,35.0,29.0,22.0,64,4,0.328125,measured
+Miami Grand Prix,SOFT,28.0,29.0,28.099999999999998,20.0,2,1,0.5,thin+derived
+Monaco Grand Prix,HARD,77.0,77.0,77.0,41.0,54,4,0.35185185185185186,measured
+Monaco Grand Prix,MEDIUM,74.0,77.0,74.19999999999993,33.0,42,4,0.30952380952380953,measured
+Monaco Grand Prix,SOFT,31.0,32.0,31.4,28.0,5,3,0.0,measured
+Qatar Grand Prix,HARD,25.0,30.0,25.0,18.0,52,3,0.5384615384615384,measured
+Qatar Grand Prix,MEDIUM,25.0,35.0,35.0,22.0,76,3,0.17105263157894737,measured+ordered
+Qatar Grand Prix,SOFT,24.0,25.0,23.599999999999998,17.0,5,3,0.8,measured
+Saudi Arabian Grand Prix,HARD,43.0,49.0,43.0,34.0,69,4,0.7391304347826086,measured
+Saudi Arabian Grand Prix,MEDIUM,34.0,41.0,33.89999999999999,16.0,55,4,0.16363636363636364,measured
+Saudi Arabian Grand Prix,SOFT,16.0,16.0,15.5,14.0,6,2,0.8333333333333334,measured
+Singapore Grand Prix,HARD,47.0,49.0,46.949999999999996,34.5,48,3,0.625,measured
+Singapore Grand Prix,MEDIUM,42.0,50.0,42.0,25.0,62,4,0.3064516129032258,measured
+Singapore Grand Prix,SOFT,28.0,38.0,27.75,17.5,26,4,0.5384615384615384,measured
+Spanish Grand Prix,HARD,35.0,37.0,35.25,26.5,36,3,0.5555555555555556,measured
+Spanish Grand Prix,MEDIUM,32.0,36.0,31.900000000000006,23.0,82,4,0.13414634146341464,measured
+Spanish Grand Prix,SOFT,24.0,25.0,24.0,16.0,125,4,0.208,measured
+São Paulo Grand Prix,HARD,29.0,29.0,28.9,28.0,3,2,0.0,measured
+São Paulo Grand Prix,MEDIUM,29.0,52.0,35.349999999999994,23.0,74,3,0.25675675675675674,measured+ordered
+São Paulo Grand Prix,SOFT,28.0,35.0,27.849999999999994,21.0,64,3,0.359375,measured
+United States Grand Prix,HARD,38.0,40.0,38.15,22.5,58,4,0.5517241379310345,measured
+United States Grand Prix,MEDIUM,33.0,38.0,32.55,20.0,90,4,0.2222222222222222,measured
+United States Grand Prix,SOFT,28.0,28.0,28.0,24.5,20,2,0.85,measured
+70th Anniversary Grand Prix,HARD,29.0,34.0,29.299999999999997,20.0,35,1,0.3142857142857143,legacy-era
+70th Anniversary Grand Prix,MEDIUM,22.0,25.0,22.150000000000002,14.5,20,1,0.3,legacy-era
+Brazilian Grand Prix,HARD,52.0,53.0,52.15,39.0,18,2,0.3333333333333333,legacy-era
+Brazilian Grand Prix,MEDIUM,40.0,42.0,40.3,26.0,35,2,0.14285714285714285,legacy-era
+Brazilian Grand Prix,SOFT,36.0,39.0,36.39999999999999,23.0,34,2,0.14705882352941177,legacy-era
+Eifel Grand Prix,HARD,32.0,32.0,31.7,28.5,4,1,0.25,legacy-era
+Eifel Grand Prix,MEDIUM,30.0,34.0,30.200000000000003,24.5,20,1,0.2,legacy-era
+Eifel Grand Prix,SOFT,29.0,29.0,28.849999999999998,16.0,24,1,0.375,legacy-era
+German Grand Prix,HARD,28.0,30.0,28.5,23.0,6,1,0.0,legacy-era
+German Grand Prix,MEDIUM,28.0,45.0,44.4,27.0,5,1,0.4,legacy-era+ordered
+German Grand Prix,SOFT,20.0,25.0,20.0,15.0,21,2,0.8571428571428571,legacy-era
+Mexican Grand Prix,HARD,57.0,66.0,57.0,40.0,41,2,0.2926829268292683,legacy-era
+Mexican Grand Prix,MEDIUM,37.0,39.0,37.0,21.0,39,2,0.15384615384615385,legacy-era
+Mexican Grand Prix,SOFT,16.0,16.0,15.7,12.0,7,2,0.14285714285714285,legacy-era
+Portuguese Grand Prix,HARD,44.0,44.0,43.8,31.0,25,2,0.6,legacy-era
+Portuguese Grand Prix,MEDIUM,44.0,54.0,51.3,34.0,38,2,0.3157894736842105,legacy-era+ordered
+Portuguese Grand Prix,SOFT,28.0,36.0,28.400000000000006,19.0,20,2,0.2,legacy-era
+Russian Grand Prix,HARD,44.0,47.0,44.15,34.0,58,4,0.3793103448275862,legacy-era
+Russian Grand Prix,MEDIUM,30.0,36.0,30.099999999999994,18.5,60,4,0.25,legacy-era
+Russian Grand Prix,SOFT,27.0,28.0,27.0,22.0,27,3,0.3333333333333333,legacy-era
+Sakhir Grand Prix,HARD,43.0,46.0,42.699999999999996,29.5,12,1,0.5,legacy-era
+Sakhir Grand Prix,MEDIUM,43.0,49.0,46.95,31.0,22,1,0.18181818181818182,legacy-era+ordered
+Sakhir Grand Prix,SOFT,35.0,42.0,35.25,27.0,16,1,0.4375,legacy-era
+Styrian Grand Prix,HARD,47.0,47.0,47.0,39.0,21,2,0.5714285714285714,legacy-era
+Styrian Grand Prix,MEDIUM,44.0,44.0,44.0,34.0,30,2,0.36666666666666664,legacy-era
+Styrian Grand Prix,SOFT,38.0,39.0,37.849999999999994,31.0,24,2,0.16666666666666666,legacy-era
+Tuscan Grand Prix,HARD,16.0,16.0,15.7,14.0,7,1,0.0,legacy-era
+Tuscan Grand Prix,MEDIUM,16.0,24.0,23.549999999999997,15.5,10,1,0.0,legacy-era+ordered
+Tuscan Grand Prix,SOFT,16.0,24.0,22.0,14.0,21,1,0.5714285714285714,legacy-era+ordered

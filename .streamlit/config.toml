@@ -1,0 +1,18 @@
+# Streamlit's own chrome - the run button, the active tab underline, the
+# checkboxes - defaults to a bright red. The interface is built on one accent
+# and greyscale, so leaving that default in would put a second, louder colour
+# on the page carrying no information at all. These four values are the whole
+# of it; everything else is styled in app.py.
+
+[theme]
+primaryColor = "#2f5d8a"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f7f8fa"
+textColor = "#16181d"
+font = "sans serif"
+
+[server]
+headless = true
+
+[browser]
+gatherUsageStats = false

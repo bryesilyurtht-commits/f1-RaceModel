@@ -1,0 +1,275 @@
+session,Race,Round,Team,is_target,speed_trap_median,n_laps,speed_trap_z
+quali,Australian Grand Prix,1,Alpine,False,251.0,36,0.06485309851119456
+quali,Australian Grand Prix,1,Aston Martin,False,225.0,10,-2.1172629219830945
+quali,Australian Grand Prix,1,Audi,False,258.5,32,0.6943096428845472
+quali,Australian Grand Prix,1,Cadillac,False,235.0,15,-1.2779875294852912
+quali,Australian Grand Prix,1,Ferrari,False,260.0,47,0.8202009517592177
+quali,Australian Grand Prix,1,Haas F1 Team,False,266.0,36,1.3237661872578999
+quali,Australian Grand Prix,1,McLaren,False,250.0,49,-0.01907444073858579
+quali,Australian Grand Prix,1,Mercedes,False,244.0,40,-0.5226396762372679
+quali,Australian Grand Prix,1,Racing Bulls,False,252.0,47,0.14878063776097492
+quali,Australian Grand Prix,1,Red Bull Racing,False,251.0,21,0.06485309851119456
+quali,Australian Grand Prix,1,Williams,False,260.0,19,0.8202009517592177
+quali,Austrian Grand Prix,8,Alpine,False,235.0,23,-1.8387355250425688
+quali,Austrian Grand Prix,8,Aston Martin,False,259.0,17,-0.024058221822986496
+quali,Austrian Grand Prix,8,Audi,False,248.0,27,-0.8557853191319617
+quali,Austrian Grand Prix,8,Cadillac,False,267.0,18,0.580834212583541
+quali,Austrian Grand Prix,8,Ferrari,False,267.0,29,0.580834212583541
+quali,Austrian Grand Prix,8,Haas F1 Team,False,252.0,27,-0.553339101928698
+quali,Austrian Grand Prix,8,McLaren,False,255.0,29,-0.3265044390262502
+quali,Austrian Grand Prix,8,Mercedes,False,251.0,37,-0.628950656229514
+quali,Austrian Grand Prix,8,Racing Bulls,False,267.0,36,0.580834212583541
+quali,Austrian Grand Prix,8,Red Bull Racing,False,285.0,28,1.9418421899982277
+quali,Austrian Grand Prix,8,Williams,False,266.5,18,0.543028435433133
+quali,Barcelona Grand Prix,7,Alpine,False,193.0,24,-1.3777412794567527
+quali,Barcelona Grand Prix,7,Aston Martin,False,218.5,16,0.08610882996604705
+quali,Barcelona Grand Prix,7,Audi,False,244.0,26,1.5499589393888469
+quali,Barcelona Grand Prix,7,Cadillac,False,233.0,15,0.9184941863045019
+quali,Barcelona Grand Prix,7,Ferrari,False,229.5,22,0.7175735830503921
+quali,Barcelona Grand Prix,7,Haas F1 Team,False,224.5,24,0.43054414983023526
+quali,Barcelona Grand Prix,7,McLaren,False,229.0,28,0.6888706397283764
+quali,Barcelona Grand Prix,7,Mercedes,False,202.5,26,-0.8323853563384548
+quali,Barcelona Grand Prix,7,Racing Bulls,False,219.5,22,0.14351471661007842
+quali,Barcelona Grand Prix,7,Red Bull Racing,False,203.0,25,-0.8036824130164392
+quali,Barcelona Grand Prix,7,Williams,False,190.5,24,-1.5212559960668313
+quali,Belgian Grand Prix,10,Alpine,False,245.0,24,-1.5848511465405029
+quali,Belgian Grand Prix,10,Aston Martin,False,257.0,14,-0.33215443190968663
+quali,Belgian Grand Prix,10,Audi,False,275.5,30,1.5990863364794883
+quali,Belgian Grand Prix,10,Cadillac,False,268.5,16,0.8683465862781788
+quali,Belgian Grand Prix,10,Ferrari,False,254.0,33,-0.6453286105673907
+quali,Belgian Grand Prix,10,Haas F1 Team,False,271.0,18,1.1293250684929321
+quali,Belgian Grand Prix,10,McLaren,False,259.5,28,-0.07117594969493328
+quali,Belgian Grand Prix,10,Mercedes,False,257.0,33,-0.33215443190968663
+quali,Belgian Grand Prix,10,Racing Bulls,False,247.5,30,-1.3238726643257495
+quali,Belgian Grand Prix,10,Red Bull Racing,False,260.0,25,-0.018980253251982604
+quali,Belgian Grand Prix,10,Williams,False,267.0,18,0.7117594969493268
+quali,British Grand Prix,9,Alpine,False,257.0,17,-1.00931100161535
+quali,British Grand Prix,9,Aston Martin,False,247.5,18,-1.9107896312632489
+quali,British Grand Prix,9,Audi,False,260.0,25,-0.7246335396212766
+quali,British Grand Prix,9,Cadillac,False,270.0,17,0.2242913336923012
+quali,British Grand Prix,9,Ferrari,False,278.0,35,0.9834312323431634
+quali,British Grand Prix,9,Haas F1 Team,False,271.5,24,0.3666300646893379
+quali,British Grand Prix,9,McLaren,False,259.0,35,-0.8195260269526344
+quali,British Grand Prix,9,Mercedes,False,278.5,36,1.0308774760088424
+quali,British Grand Prix,9,Racing Bulls,False,272.0,37,0.41407630835501674
+quali,British Grand Prix,9,Red Bull Racing,False,281.5,36,1.3155549380029157
+quali,British Grand Prix,9,Williams,False,269.0,29,0.12939884636094343
+quali,Canadian Grand Prix,5,Alpine,False,251.0,47,-0.9674064381829293
+quali,Canadian Grand Prix,5,Aston Martin,False,261.0,21,0.10748960424254769
+quali,Canadian Grand Prix,5,Audi,False,259.0,43,-0.10748960424254769
+quali,Canadian Grand Prix,5,Cadillac,False,273.0,21,1.39736485515312
+quali,Canadian Grand Prix,5,Ferrari,False,253.0,56,-0.7524272296978338
+quali,Canadian Grand Prix,5,Haas F1 Team,False,252.5,34,-0.8061720318191077
+quali,Canadian Grand Prix,5,McLaren,False,249.0,57,-1.1823856466680247
+quali,Canadian Grand Prix,5,Mercedes,False,270.0,48,1.074896042425477
+quali,Canadian Grand Prix,5,Racing Bulls,False,261.0,50,0.10748960424254769
+quali,Canadian Grand Prix,5,Red Bull Racing,False,276.0,45,1.719833667880763
+quali,Canadian Grand Prix,5,Williams,False,254.5,34,-0.5911928233340124
+quali,Chinese Grand Prix,2,Alpine,False,287.0,36,1.2666193624766484
+quali,Chinese Grand Prix,2,Aston Martin,False,255.5,18,-1.5467371061012907
+quali,Chinese Grand Prix,2,Audi,False,281.0,26,0.7307419398903743
+quali,Chinese Grand Prix,2,Cadillac,False,279.0,15,0.5521161323616162
+quali,Chinese Grand Prix,2,Ferrari,False,259.0,39,-1.2341419429259641
+quali,Chinese Grand Prix,2,Haas F1 Team,False,269.0,33,-0.341012905282174
+quali,Chinese Grand Prix,2,McLaren,False,288.0,40,1.3559322662410274
+quali,Chinese Grand Prix,2,Mercedes,False,279.5,28,0.5967725842438057
+quali,Chinese Grand Prix,2,Racing Bulls,False,260.5,30,-1.1001725872793957
+quali,Chinese Grand Prix,2,Red Bull Racing,False,273.5,40,0.06089516165753161
+quali,Chinese Grand Prix,2,Williams,False,269.0,20,-0.341012905282174
+quali,Dutch Grand Prix,12,Alpine,False,275.0,25,1.1021537148588547
+quali,Dutch Grand Prix,12,Aston Martin,False,247.0,18,-1.6465373311049236
+quali,Dutch Grand Prix,12,Audi,False,252.0,39,-1.1556996443256775
+quali,Dutch Grand Prix,12,Cadillac,False,266.0,18,0.21864587865621166
+quali,Dutch Grand Prix,12,Ferrari,False,250.0,46,-1.3520347190373758
+quali,Dutch Grand Prix,12,Haas F1 Team,False,261.5,26,-0.22310803944510985
+quali,Dutch Grand Prix,12,McLaren,False,262.0,40,-0.17402427076718524
+quali,Dutch Grand Prix,12,Mercedes,False,269.0,39,0.5131484907237593
+quali,Dutch Grand Prix,12,Racing Bulls,False,274.0,35,1.0039861775030055
+quali,Dutch Grand Prix,12,Red Bull Racing,False,274.0,45,1.0039861775030055
+quali,Dutch Grand Prix,12,Williams,False,271.0,24,0.7094835654354578
+quali,Hungarian Grand Prix,11,Alpine,False,291.0,22,0.6417699947989888
+quali,Hungarian Grand Prix,11,Aston Martin,False,279.0,21,0.0862707206123235
+quali,Hungarian Grand Prix,11,Audi,False,296.5,26,0.8963738288012104
+quali,Hungarian Grand Prix,11,Cadillac,False,300.0,17,1.0583944504389877
+quali,Hungarian Grand Prix,11,Ferrari,False,290.0,33,0.5954783886167667
+quali,Hungarian Grand Prix,11,Haas F1 Team,False,293.5,16,0.7574990102545441
+quali,Hungarian Grand Prix,11,McLaren,False,258.0,29,-0.8858530092143408
+quali,Hungarian Grand Prix,11,Mercedes,False,286.0,37,0.4103119638878783
+quali,Hungarian Grand Prix,11,Racing Bulls,False,252.5,28,-1.1404568432165625
+quali,Hungarian Grand Prix,11,Red Bull Racing,False,232.0,30,-2.0894347699521156
+quali,Hungarian Grand Prix,11,Williams,False,270.0,16,-0.3303537350276755
+quali,Italian Grand Prix,13,Alpine,True,202.5,36,-0.8974823388387068
+quali,Italian Grand Prix,13,Aston Martin,True,200.0,15,-1.0031815436269913
+quali,Italian Grand Prix,13,Audi,True,188.0,24,-1.5105377266107571
+quali,Italian Grand Prix,13,Cadillac,True,216.5,18,-0.3055667920243132
+quali,Italian Grand Prix,13,Ferrari,True,215.0,33,-0.36898631489728395
+quali,Italian Grand Prix,13,Haas F1 Team,True,220.0,30,-0.15758790532071482
+quali,Italian Grand Prix,13,McLaren,True,258.0,37,1.4490400074612104
+quali,Italian Grand Prix,13,Mercedes,True,255.0,35,1.322200961715269
+quali,Italian Grand Prix,13,Racing Bulls,True,215.5,24,-0.34784647393962703
+quali,Italian Grand Prix,13,Red Bull Racing,True,242.5,34,0.7937049377738462
+quali,Italian Grand Prix,13,Williams,True,248.0,21,1.0262431883080723
+quali,Japanese Grand Prix,3,Alpine,False,258.0,30,0.27348037017036314
+quali,Japanese Grand Prix,3,Aston Martin,False,248.0,18,-0.5507070467814175
+quali,Japanese Grand Prix,3,Audi,False,229.0,34,-2.1166631389898005
+quali,Japanese Grand Prix,3,Cadillac,False,263.0,15,0.6855740786462534
+quali,Japanese Grand Prix,3,Ferrari,False,257.5,38,0.2322709993227741
+quali,Japanese Grand Prix,3,Haas F1 Team,False,250.5,24,-0.3446601925434723
+quali,Japanese Grand Prix,3,McLaren,False,238.5,40,-1.333685092885609
+quali,Japanese Grand Prix,3,Mercedes,False,265.0,36,0.8504115620366095
+quali,Japanese Grand Prix,3,Racing Bulls,False,259.5,36,0.3971084827131302
+quali,Japanese Grand Prix,3,Red Bull Racing,False,265.0,29,0.8504115620366095
+quali,Japanese Grand Prix,3,Williams,False,267.5,24,1.0564584162745547
+quali,Miami Grand Prix,4,Alpine,False,258.0,39,0.2159838852118682
+quali,Miami Grand Prix,4,Aston Martin,False,216.0,17,-2.409925456048204
+quali,Miami Grand Prix,4,Audi,False,262.5,16,0.4973313146325902
+quali,Miami Grand Prix,4,Cadillac,False,246.5,18,-0.5030151010855325
+quali,Miami Grand Prix,4,Ferrari,False,245.5,42,-0.5655367520679152
+quali,Miami Grand Prix,4,Haas F1 Team,False,267.0,27,0.7786787440533123
+quali,Miami Grand Prix,4,McLaren,False,268.5,40,0.8724612205268862
+quali,Miami Grand Prix,4,Mercedes,False,275.0,35,1.2788519519123736
+quali,Miami Grand Prix,4,Racing Bulls,False,248.0,23,-0.4092326246119585
+quali,Miami Grand Prix,4,Red Bull Racing,False,252.5,36,-0.12788519519123648
+quali,Miami Grand Prix,4,Williams,False,260.5,30,0.3722880126678249
+quali,Monaco Grand Prix,6,Alpine,False,277.0,54,0.9587550088158837
+quali,Monaco Grand Prix,6,Aston Martin,False,260.0,23,-1.5664166341217316
+quali,Monaco Grand Prix,6,Audi,False,281.0,31,1.5529130424482638
+quali,Monaco Grand Prix,6,Cadillac,False,278.0,23,1.1072945172239788
+quali,Monaco Grand Prix,6,Ferrari,False,264.0,57,-0.9722586004893515
+quali,Monaco Grand Prix,6,Haas F1 Team,False,264.0,28,-0.9722586004893515
+quali,Monaco Grand Prix,6,McLaren,False,273.5,56,0.43886672938755117
+quali,Monaco Grand Prix,6,Mercedes,False,272.0,55,0.21605746677540863
+quali,Monaco Grand Prix,6,Racing Bulls,False,264.5,50,-0.8979888462853041
+quali,Monaco Grand Prix,6,Red Bull Racing,False,270.0,51,-0.0810215500407814
+quali,Monaco Grand Prix,6,Williams,False,272.0,46,0.21605746677540863
+race,Australian Grand Prix,1,Alpine,False,264.5,10,-0.6075367422825296
+race,Australian Grand Prix,1,Aston Martin,False,261.0,10,-1.1216062934446713
+race,Australian Grand Prix,1,Audi,False,276.0,5,1.0815489258216502
+race,Australian Grand Prix,1,Cadillac,False,263.5,10,-0.7544137569002843
+race,Australian Grand Prix,1,Ferrari,False,273.0,10,0.640917881968386
+race,Australian Grand Prix,1,Haas F1 Team,False,265.0,10,-0.5340982349736522
+race,Australian Grand Prix,1,McLaren,False,273.0,5,0.640917881968386
+race,Australian Grand Prix,1,Mercedes,False,272.5,10,0.5674793746595086
+race,Australian Grand Prix,1,Racing Bulls,False,263.0,10,-0.8278522642091617
+race,Australian Grand Prix,1,Red Bull Racing,False,281.5,10,1.8893725062193014
+race,Australian Grand Prix,1,Williams,False,262.0,10,-0.9747292788269165
+race,Austrian Grand Prix,8,Alpine,False,303.0,10,0.7127246946361895
+race,Austrian Grand Prix,8,Aston Martin,False,281.0,10,-2.1381740839085683
+race,Austrian Grand Prix,8,Audi,False,297.0,10,-0.06479315405783541
+race,Austrian Grand Prix,8,Cadillac,False,288.0,6,-1.2310699270988728
+race,Austrian Grand Prix,8,Ferrari,False,296.0,10,-0.1943794621735062
+race,Austrian Grand Prix,8,Haas F1 Team,False,298.5,10,0.12958630811567082
+race,Austrian Grand Prix,8,McLaren,False,309.0,10,1.4902425433302144
+race,Austrian Grand Prix,8,Mercedes,False,296.0,10,-0.1943794621735062
+race,Austrian Grand Prix,8,Racing Bulls,False,299.0,10,0.1943794621735062
+race,Austrian Grand Prix,8,Red Bull Racing,False,300.0,10,0.32396577028917706
+race,Austrian Grand Prix,8,Williams,False,305.0,10,0.9718973108675312
+race,Barcelona Grand Prix,7,Alpine,False,346.0,10,0.9325507795390283
+race,Barcelona Grand Prix,7,Aston Martin,False,329.0,10,-1.1434848844347638
+race,Barcelona Grand Prix,7,Audi,False,349.0,10,1.2989100143579329
+race,Barcelona Grand Prix,7,Cadillac,False,345.0,10,0.8104310345993935
+race,Barcelona Grand Prix,7,Ferrari,False,324.0,10,-1.754083609132938
+race,Barcelona Grand Prix,7,Haas F1 Team,False,347.5,10,1.1157303969484806
+race,Barcelona Grand Prix,7,McLaren,False,337.0,10,-0.16652692491768512
+race,Barcelona Grand Prix,7,Mercedes,False,330.5,10,-0.9603052670253115
+race,Barcelona Grand Prix,7,Racing Bulls,False,336.5,10,-0.22758679738750254
+race,Barcelona Grand Prix,7,Red Bull Racing,False,336.5,10,-0.22758679738750254
+race,Barcelona Grand Prix,7,Williams,False,341.0,10,0.3219520548408542
+race,Belgian Grand Prix,10,Alpine,False,263.5,10,0.10879196809004371
+race,Belgian Grand Prix,10,Aston Martin,False,266.5,10,0.2227645060891367
+race,Belgian Grand Prix,10,Audi,False,266.5,10,0.2227645060891367
+race,Belgian Grand Prix,10,Cadillac,False,268.5,10,0.29874619808853203
+race,Belgian Grand Prix,10,Ferrari,False,265.5,10,0.18477366008943905
+race,Belgian Grand Prix,10,Haas F1 Team,False,273.5,10,0.48870042808702036
+race,Belgian Grand Prix,10,McLaren,False,258.5,10,-0.08116226190844462
+race,Belgian Grand Prix,10,Mercedes,False,186.0,5,-2.8354985968865254
+race,Belgian Grand Prix,10,Racing Bulls,False,292.0,10,1.191531079081427
+race,Belgian Grand Prix,10,Red Bull Racing,False,267.0,10,0.24175992908898553
+race,Belgian Grand Prix,10,Williams,False,259.5,10,-0.04317141590874696
+race,British Grand Prix,9,Alpine,False,335.0,10,2.6376587955137993
+race,British Grand Prix,9,Aston Martin,False,299.5,10,-0.7119534309842144
+race,British Grand Prix,9,Audi,False,308.0,10,0.09006639789559173
+race,British Grand Prix,9,Cadillac,False,304.5,10,-0.24017706105491665
+race,British Grand Prix,9,Ferrari,False,302.5,10,-0.4288876090266357
+race,British Grand Prix,9,Haas F1 Team,False,308.0,10,0.09006639789559173
+race,British Grand Prix,9,McLaren,False,301.0,10,-0.570420520005425
+race,British Grand Prix,9,Mercedes,False,310.5,10,0.3259545828602406
+race,British Grand Prix,9,Racing Bulls,False,302.0,10,-0.4760652460195655
+race,British Grand Prix,9,Red Bull Racing,False,312.0,10,0.4674874938390299
+race,British Grand Prix,9,Williams,False,294.5,10,-1.183729800913512
+race,Canadian Grand Prix,5,Alpine,False,312.0,10,0.14299285896971053
+race,Canadian Grand Prix,5,Aston Martin,False,312.5,10,0.24130044951138374
+race,Canadian Grand Prix,5,Audi,False,303.0,10,-1.6265437707804071
+race,Canadian Grand Prix,5,Cadillac,False,306.5,10,-0.9383906369886946
+race,Canadian Grand Prix,5,Ferrari,False,322.0,10,2.1091446698031744
+race,Canadian Grand Prix,5,Haas F1 Team,False,312.5,10,0.24130044951138374
+race,Canadian Grand Prix,5,McLaren,False,306.5,10,-0.9383906369886946
+race,Canadian Grand Prix,5,Mercedes,False,311.5,10,0.044685268428037335
+race,Canadian Grand Prix,5,Racing Bulls,False,313.0,5,0.33960804005305695
+race,Canadian Grand Prix,5,Red Bull Racing,False,315.5,10,0.831145992761423
+race,Canadian Grand Prix,5,Williams,False,309.0,10,-0.44685268428032865
+race,Chinese Grand Prix,2,Alpine,False,314.0,10,-0.6496943158643281
+race,Chinese Grand Prix,2,Aston Martin,False,310.5,10,-0.9677264984552589
+race,Chinese Grand Prix,2,Audi,False,329.0,5,0.7133007523825183
+race,Chinese Grand Prix,2,Cadillac,False,321.0,10,-0.0136299506824664
+race,Chinese Grand Prix,2,Ferrari,False,315.0,10,-0.558827977981205
+race,Chinese Grand Prix,2,Haas F1 Team,False,332.0,10,0.9858997660318877
+race,Chinese Grand Prix,2,Mercedes,False,311.0,10,-0.9222933295136974
+race,Chinese Grand Prix,2,Racing Bulls,False,318.0,10,-0.2862289643318357
+race,Chinese Grand Prix,2,Red Bull Racing,False,316.0,10,-0.4679616400980819
+race,Chinese Grand Prix,2,Williams,False,345.0,5,2.167162158512488
+race,Dutch Grand Prix,12,Alpine,False,211.0,10,-0.8765913197633104
+race,Dutch Grand Prix,12,Aston Martin,False,221.0,10,0.6068709136822924
+race,Dutch Grand Prix,12,Audi,False,220.5,10,0.5326978020100123
+race,Dutch Grand Prix,12,Cadillac,False,216.0,9,-0.13486020304050897
+race,Dutch Grand Prix,12,Ferrari,False,218.5,10,0.23600535532089173
+race,Dutch Grand Prix,12,Haas F1 Team,False,206.0,7,-1.6183224364861117
+race,Dutch Grand Prix,12,McLaren,False,215.0,10,-0.28320642638506927
+race,Dutch Grand Prix,12,Mercedes,False,218.0,10,0.1618322436486116
+race,Dutch Grand Prix,12,Racing Bulls,False,223.0,10,0.903563360371413
+race,Dutch Grand Prix,12,Red Bull Racing,False,229.0,5,1.7936407004387747
+race,Dutch Grand Prix,12,Williams,False,208.0,10,-1.3216299897969912
+race,Hungarian Grand Prix,11,Alpine,False,330.5,10,0.938927850118481
+race,Hungarian Grand Prix,11,Aston Martin,False,325.0,10,-0.1640844786614809
+race,Hungarian Grand Prix,11,Audi,False,325.5,10,-0.06381063059057528
+race,Hungarian Grand Prix,11,Cadillac,False,327.0,9,0.2370109136221416
+race,Hungarian Grand Prix,11,Ferrari,False,330.5,10,0.938927850118481
+race,Hungarian Grand Prix,11,Haas F1 Team,False,329.0,10,0.6381063059057641
+race,Hungarian Grand Prix,11,McLaren,False,317.5,10,-1.6681921997250653
+race,Hungarian Grand Prix,11,Mercedes,False,334.0,10,1.6408447866148204
+race,Hungarian Grand Prix,11,Racing Bulls,False,320.0,10,-1.1668229593705373
+race,Hungarian Grand Prix,11,Red Bull Racing,False,322.0,10,-0.7657275670869147
+race,Hungarian Grand Prix,11,Williams,False,323.0,10,-0.5651798709451034
+race,Japanese Grand Prix,3,Alpine,False,288.5,10,0.3787781186034117
+race,Japanese Grand Prix,3,Aston Martin,False,278.5,10,-2.002112912618072
+race,Japanese Grand Prix,3,Audi,False,290.0,10,0.7359117732866343
+race,Japanese Grand Prix,3,Cadillac,False,288.5,10,0.3787781186034117
+race,Japanese Grand Prix,3,Ferrari,False,285.0,10,-0.4545337423241076
+race,Japanese Grand Prix,3,Haas F1 Team,False,285.0,10,-0.4545337423241076
+race,Japanese Grand Prix,3,McLaren,False,281.0,10,-1.406890154812701
+race,Japanese Grand Prix,3,Mercedes,False,290.5,10,0.8549563248477084
+race,Japanese Grand Prix,3,Racing Bulls,False,289.0,10,0.4978226701644859
+race,Japanese Grand Prix,3,Red Bull Racing,False,287.5,10,0.14068901548126334
+race,Japanese Grand Prix,3,Williams,False,292.5,10,1.331134531092005
+race,Miami Grand Prix,4,Alpine,False,309.0,9,0.41125491658183294
+race,Miami Grand Prix,4,Aston Martin,False,298.0,10,-0.8646898246079509
+race,Miami Grand Prix,4,Audi,False,291.5,10,-1.6186571716746414
+race,Miami Grand Prix,4,Cadillac,False,292.5,10,-1.5026621952028427
+race,Miami Grand Prix,4,Ferrari,False,300.0,10,-0.6326998716643538
+race,Miami Grand Prix,4,Haas F1 Team,False,311.5,10,0.7012423577613293
+race,Miami Grand Prix,4,McLaren,False,315.0,10,1.107224775412624
+race,Miami Grand Prix,4,Mercedes,False,314.5,10,1.049227287176725
+race,Miami Grand Prix,4,Racing Bulls,False,305.5,10,0.005272498930538095
+race,Miami Grand Prix,4,Red Bull Racing,False,313.0,9,0.8752348224690271
+race,Miami Grand Prix,4,Williams,False,309.5,10,0.4692524048177322
+race,Monaco Grand Prix,6,Alpine,False,271.5,10,0.7137783036336487
+race,Monaco Grand Prix,6,Aston Martin,False,262.0,10,-1.1987815099488117
+race,Monaco Grand Prix,6,Audi,False,273.5,10,1.1164224749141667
+race,Monaco Grand Prix,6,Cadillac,False,258.0,10,-2.004069852509848
+race,Monaco Grand Prix,6,Ferrari,False,266.0,10,-0.39349316738777584
+race,Monaco Grand Prix,6,Haas F1 Team,False,270.5,10,0.5124562179933897
+race,Monaco Grand Prix,6,McLaren,False,268.0,10,0.009151003892742166
+race,Monaco Grand Prix,6,Mercedes,False,266.0,10,-0.39349316738777584
+race,Monaco Grand Prix,6,Racing Bulls,False,275.0,10,1.4184056033745551
+race,Monaco Grand Prix,6,Red Bull Racing,False,267.0,5,-0.19217108174751682
+race,Monaco Grand Prix,6,Williams,False,270.0,10,0.41179517517326014

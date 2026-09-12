@@ -1,0 +1,42 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "F1 Sim: ARAYUZ (app.py)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "streamlit",
+            "args": ["run", "app.py", "--server.port", "8501"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "F1 Sim: simulate.py",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "Simülasyon.simulate",
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "F1 Sim: fit_tyre_curve.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/Simülasyon/Tyre_model/fit_tyre_curve.py",
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "F1 Sim: test_tyre_curve.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/Simülasyon/Tyre_model/test_tyre_curve.py",
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        }
+    ]
+}

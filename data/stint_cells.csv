@@ -1,0 +1,73 @@
+Race,Compound,n_stints,n_seasons,n_long,n_to_flag,median_laps,max_laps,measurable
+Abu Dhabi Grand Prix,HARD,103,4,99,48,24.0,43,True
+Abu Dhabi Grand Prix,MEDIUM,82,4,45,21,15.0,27,True
+Abu Dhabi Grand Prix,SOFT,6,3,2,2,12.0,23,False
+Australian Grand Prix,HARD,73,3,65,32,25.0,44,True
+Australian Grand Prix,MEDIUM,28,3,10,1,13.5,32,True
+Austrian Grand Prix,HARD,95,4,90,26,24.0,39,True
+Austrian Grand Prix,MEDIUM,107,4,71,25,17.0,32,True
+Austrian Grand Prix,SOFT,6,1,1,1,8.0,15,False
+Azerbaijan Grand Prix,HARD,85,4,77,49,30.0,46,True
+Azerbaijan Grand Prix,MEDIUM,65,4,12,15,10.0,29,True
+Azerbaijan Grand Prix,SOFT,1,1,0,1,11.0,11,False
+Bahrain Grand Prix,HARD,88,4,66,31,18.0,29,True
+Bahrain Grand Prix,MEDIUM,48,3,27,6,15.5,26,True
+Bahrain Grand Prix,SOFT,103,4,25,16,12.0,22,True
+Belgian Grand Prix,HARD,40,4,25,18,15.5,32,True
+Belgian Grand Prix,MEDIUM,94,4,36,30,13.0,32,True
+Belgian Grand Prix,SOFT,28,3,11,19,13.0,28,True
+British Grand Prix,HARD,20,4,10,6,14.5,30,True
+British Grand Prix,MEDIUM,68,4,44,20,22.0,31,True
+British Grand Prix,SOFT,45,4,6,34,13.0,26,True
+Canadian Grand Prix,HARD,89,4,81,25,25.0,54,True
+Canadian Grand Prix,MEDIUM,62,4,20,14,12.5,33,True
+Canadian Grand Prix,SOFT,1,1,0,0,6.0,6,False
+Chinese Grand Prix,HARD,43,2,36,29,25.0,45,True
+Chinese Grand Prix,MEDIUM,36,2,9,6,10.0,29,True
+Chinese Grand Prix,SOFT,5,1,1,1,7.0,15,False
+Dutch Grand Prix,HARD,46,4,42,16,31.0,56,True
+Dutch Grand Prix,MEDIUM,65,4,52,4,21.0,31,True
+Dutch Grand Prix,SOFT,69,4,30,18,13.0,42,True
+Emilia Romagna Grand Prix,HARD,49,3,41,22,25.0,53,True
+Emilia Romagna Grand Prix,MEDIUM,58,3,40,20,24.5,42,True
+Emilia Romagna Grand Prix,SOFT,5,2,0,4,9.0,11,False
+French Grand Prix,HARD,21,1,18,12,28.0,29,True
+French Grand Prix,MEDIUM,21,1,14,3,16.0,29,True
+Hungarian Grand Prix,HARD,91,4,89,39,26.0,54,True
+Hungarian Grand Prix,MEDIUM,93,4,79,23,19.0,38,True
+Hungarian Grand Prix,SOFT,27,4,6,8,12.0,25,True
+Italian Grand Prix,HARD,74,4,68,38,24.5,48,True
+Italian Grand Prix,MEDIUM,75,4,48,15,17.0,43,True
+Italian Grand Prix,SOFT,11,2,5,2,12.0,21,True
+Japanese Grand Prix,HARD,68,3,54,40,19.0,37,True
+Japanese Grand Prix,MEDIUM,45,3,31,8,18.0,31,True
+Japanese Grand Prix,SOFT,10,3,3,4,12.0,19,True
+Las Vegas Grand Prix,HARD,82,3,70,43,19.0,45,True
+Las Vegas Grand Prix,MEDIUM,38,3,14,6,11.0,23,True
+Mexico City Grand Prix,HARD,47,4,38,22,32.0,44,True
+Mexico City Grand Prix,MEDIUM,76,4,74,21,25.5,45,True
+Mexico City Grand Prix,SOFT,43,2,41,19,22.0,36,True
+Miami Grand Prix,HARD,70,4,61,39,28.0,53,True
+Miami Grand Prix,MEDIUM,64,4,47,21,19.0,29,True
+Miami Grand Prix,SOFT,2,1,1,1,17.0,25,False
+Monaco Grand Prix,HARD,54,4,53,19,37.0,75,True
+Monaco Grand Prix,MEDIUM,42,4,33,13,28.5,73,True
+Monaco Grand Prix,SOFT,5,3,3,0,26.0,31,False
+Qatar Grand Prix,HARD,52,3,30,28,15.0,24,True
+Qatar Grand Prix,MEDIUM,76,3,48,13,17.0,28,True
+Qatar Grand Prix,SOFT,5,3,3,4,15.0,24,False
+Saudi Arabian Grand Prix,HARD,69,4,65,51,30.0,46,True
+Saudi Arabian Grand Prix,MEDIUM,55,4,28,9,15.0,35,True
+Saudi Arabian Grand Prix,SOFT,6,2,0,5,13.0,14,False
+Singapore Grand Prix,HARD,48,3,48,30,32.0,48,True
+Singapore Grand Prix,MEDIUM,62,4,56,19,20.5,46,True
+Singapore Grand Prix,SOFT,26,4,14,14,15.0,35,True
+Spanish Grand Prix,HARD,36,3,35,20,25.0,36,True
+Spanish Grand Prix,MEDIUM,82,4,72,11,21.0,34,True
+Spanish Grand Prix,SOFT,125,4,59,26,14.0,23,True
+São Paulo Grand Prix,HARD,3,2,2,0,19.0,20,False
+São Paulo Grand Prix,MEDIUM,74,3,66,19,20.0,51,True
+São Paulo Grand Prix,SOFT,64,3,45,23,17.0,34,True
+United States Grand Prix,HARD,58,4,57,32,20.5,38,True
+United States Grand Prix,MEDIUM,90,4,64,20,17.5,32,True
+United States Grand Prix,SOFT,20,2,18,17,22.0,26,True

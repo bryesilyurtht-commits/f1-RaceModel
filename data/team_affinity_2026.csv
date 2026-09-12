@@ -1,0 +1,144 @@
+Team,Race,Round,affinity_quali,n_reference,cars,affinity_race,affinity,shrinkage,raced_2026,source,version
+Red Bull Racing,Australian Grand Prix,1,2.6364,11,1,0.5271,1.4946,0.5669,True,quali x shrinkage,1.0.0
+Aston Martin,Australian Grand Prix,1,1.7727,11,1,-1.5638,1.005,0.5669,True,quali x shrinkage,1.0.0
+Haas F1 Team,Australian Grand Prix,1,1.4545,11,2,4.0726,0.8246,0.5669,True,quali x shrinkage,1.0.0
+Racing Bulls,Australian Grand Prix,1,1.0909,11,2,-1.6547,0.6184,0.5669,True,quali x shrinkage,1.0.0
+Audi,Australian Grand Prix,1,0.4091,11,2,1.8907,0.2319,0.5669,True,quali x shrinkage,1.0.0
+Cadillac,Australian Grand Prix,1,0.0455,11,2,-0.2911,0.0258,0.5669,True,quali x shrinkage,1.0.0
+Mercedes,Australian Grand Prix,1,-0.4091,11,2,1.5271,-0.2319,0.5669,True,quali x shrinkage,1.0.0
+Williams,Australian Grand Prix,1,-0.4091,11,1,0.0726,-0.2319,0.5669,True,quali x shrinkage,1.0.0
+McLaren,Australian Grand Prix,1,-1.9545,11,2,-1.068,-1.108,0.5669,True,quali x shrinkage,1.0.0
+Ferrari,Australian Grand Prix,1,-2.6818,11,2,0.1635,-1.5203,0.5669,True,quali x shrinkage,1.0.0
+Alpine,Australian Grand Prix,1,-4.4545,11,2,-2.4274,-2.5253,0.5669,True,quali x shrinkage,1.0.0
+Ferrari,Austrian Grand Prix,8,2.2273,11,2,-1.3936,1.2626,0.5669,True,quali x shrinkage,1.0.0
+Racing Bulls,Austrian Grand Prix,8,1.6364,11,2,1.1519,0.9277,0.5669,True,quali x shrinkage,1.0.0
+Haas F1 Team,Austrian Grand Prix,8,1.4545,11,2,-0.7572,0.8246,0.5669,True,quali x shrinkage,1.0.0
+Cadillac,Austrian Grand Prix,8,0.5909,11,2,-3.4845,0.335,0.5669,True,quali x shrinkage,1.0.0
+Red Bull Racing,Austrian Grand Prix,8,0.4545,11,2,3.8792,0.2577,0.5669,True,quali x shrinkage,1.0.0
+Mercedes,Austrian Grand Prix,8,0.1364,11,2,2.6974,0.0773,0.5669,True,quali x shrinkage,1.0.0
+Audi,Austrian Grand Prix,8,-0.6818,11,2,0.8792,-0.3865,0.5669,True,quali x shrinkage,1.0.0
+Alpine,Austrian Grand Prix,8,-1.1818,11,2,-2.8936,-0.67,0.5669,True,quali x shrinkage,1.0.0
+McLaren,Austrian Grand Prix,8,-1.4091,11,2,0.112,-0.7988,0.5669,True,quali x shrinkage,1.0.0
+Aston Martin,Austrian Grand Prix,8,-1.5,11,2,-0.939,-0.8504,0.5669,True,quali x shrinkage,1.0.0
+Williams,Austrian Grand Prix,8,-1.5,11,2,-0.939,-0.8504,0.5669,True,quali x shrinkage,1.0.0
+Racing Bulls,Belgian Grand Prix,10,1.6364,11,2,-0.2365,0.9277,0.5669,True,quali x shrinkage,1.0.0
+Red Bull Racing,Belgian Grand Prix,10,1.0,11,2,3.0362,0.5669,0.5669,True,quali x shrinkage,1.0.0
+Audi,Belgian Grand Prix,10,0.9545,11,2,1.6726,0.5411,0.5669,True,quali x shrinkage,1.0.0
+Cadillac,Belgian Grand Prix,10,0.5909,11,2,-1.6002,0.335,0.5669,True,quali x shrinkage,1.0.0
+McLaren,Belgian Grand Prix,10,0.2273,11,2,-0.738,0.1288,0.5669,True,quali x shrinkage,1.0.0
+Mercedes,Belgian Grand Prix,10,0.1364,11,2,3.4907,0.0773,0.5669,True,quali x shrinkage,1.0.0
+Williams,Belgian Grand Prix,10,0.1364,11,2,-0.6911,0.0773,0.5669,True,quali x shrinkage,1.0.0
+Alpine,Belgian Grand Prix,10,-0.0909,11,2,0.6271,-0.0515,0.5669,True,quali x shrinkage,1.0.0
+Ferrari,Belgian Grand Prix,10,-1.0455,11,2,2.1271,-0.5927,0.5669,True,quali x shrinkage,1.0.0
+Aston Martin,Belgian Grand Prix,10,-1.5,11,2,-2.3274,-0.8504,0.5669,True,quali x shrinkage,1.0.0
+Haas F1 Team,Belgian Grand Prix,10,-1.8182,11,2,-1.6002,-1.0307,0.5669,True,quali x shrinkage,1.0.0
+Ferrari,British Grand Prix,9,2.2273,11,2,3.4164,1.2626,0.5669,True,quali x shrinkage,1.0.0
+Racing Bulls,British Grand Prix,9,1.6364,11,2,4.3254,0.9277,0.5669,True,quali x shrinkage,1.0.0
+Cadillac,British Grand Prix,9,1.1364,11,2,3.5073,0.6442,0.5669,True,quali x shrinkage,1.0.0
+Red Bull Racing,British Grand Prix,9,1.0,11,2,-5.4927,0.5669,0.5669,True,quali x shrinkage,1.0.0
+Williams,British Grand Prix,9,0.6818,11,2,-4.3109,0.3865,0.5669,True,quali x shrinkage,1.0.0
+Audi,British Grand Prix,9,0.4091,11,2,0.78,0.2319,0.5669,True,quali x shrinkage,1.0.0
+Mercedes,British Grand Prix,9,0.1364,11,2,-4.4927,0.0773,0.5669,True,quali x shrinkage,1.0.0
+Haas F1 Team,British Grand Prix,9,-0.1818,11,2,1.8709,-0.1031,0.5669,True,quali x shrinkage,1.0.0
+Aston Martin,British Grand Prix,9,-1.5,11,2,-1.0382,-0.8504,0.5669,True,quali x shrinkage,1.0.0
+McLaren,British Grand Prix,9,-1.9545,11,2,-2.188,-1.108,0.5669,True,quali x shrinkage,1.0.0
+Alpine,British Grand Prix,9,-3.3636,11,2,1.9164,-1.9069,0.5669,True,quali x shrinkage,1.0.0
+McLaren,Canadian Grand Prix,5,1.8636,11,2,-6.8403,1.0565,0.5669,True,quali x shrinkage,1.0.0
+Mercedes,Canadian Grand Prix,5,1.2273,11,2,1.257,0.6957,0.5669,True,quali x shrinkage,1.0.0
+Racing Bulls,Canadian Grand Prix,5,0.5455,11,2,1.3479,0.3092,0.5669,True,quali x shrinkage,1.0.0
+Alpine,Canadian Grand Prix,5,0.4545,11,2,2.2115,0.2577,0.5669,True,quali x shrinkage,1.0.0
+Red Bull Racing,Canadian Grand Prix,5,0.4545,11,2,1.3479,0.2577,0.5669,True,quali x shrinkage,1.0.0
+Audi,Canadian Grand Prix,5,0.4091,11,2,-2.743,0.2319,0.5669,True,quali x shrinkage,1.0.0
+Aston Martin,Canadian Grand Prix,5,0.1364,11,2,-0.743,0.0773,0.5669,True,quali x shrinkage,1.0.0
+Williams,Canadian Grand Prix,5,-0.4091,11,2,2.5297,-0.2319,0.5669,True,quali x shrinkage,1.0.0
+Cadillac,Canadian Grand Prix,5,-1.0455,11,2,1.0752,-0.5927,0.5669,True,quali x shrinkage,1.0.0
+Haas F1 Team,Canadian Grand Prix,5,-1.2727,11,2,-0.0158,-0.7215,0.5669,True,quali x shrinkage,1.0.0
+Ferrari,Canadian Grand Prix,5,-2.1364,11,2,-0.1067,-1.2111,0.5669,True,quali x shrinkage,1.0.0
+Haas F1 Team,Chinese Grand Prix,2,4.1818,11,2,3.0059,2.3707,0.5669,True,quali x shrinkage,1.0.0
+Alpine,Chinese Grand Prix,2,3.1818,11,2,1.415,1.8038,0.5669,True,quali x shrinkage,1.0.0
+Mercedes,Chinese Grand Prix,2,1.2273,11,2,1.0059,0.6957,0.5669,True,quali x shrinkage,1.0.0
+Ferrari,Chinese Grand Prix,2,1.1364,11,2,-0.3577,0.6442,0.5669,True,quali x shrinkage,1.0.0
+Aston Martin,Chinese Grand Prix,2,0.1364,11,2,-0.9941,0.0773,0.5669,True,quali x shrinkage,1.0.0
+McLaren,Chinese Grand Prix,2,-0.3182,11,2,,-0.1804,0.5669,False,quali x shrinkage,1.0.0
+Cadillac,Chinese Grand Prix,2,-1.0455,11,2,2.4604,-0.5927,0.5669,True,quali x shrinkage,1.0.0
+Audi,Chinese Grand Prix,2,-1.2273,11,2,-0.8123,-0.6957,0.5669,True,quali x shrinkage,1.0.0
+Williams,Chinese Grand Prix,2,-1.5,11,2,4.4604,-0.8504,0.5669,True,quali x shrinkage,1.0.0
+Red Bull Racing,Chinese Grand Prix,2,-1.7273,11,2,-5.4487,-0.9792,0.5669,True,quali x shrinkage,1.0.0
+Racing Bulls,Chinese Grand Prix,2,-3.8182,11,2,-1.085,-2.1645,0.5669,True,quali x shrinkage,1.0.0
+McLaren,Dutch Grand Prix,12,2.9545,11,2,1.4358,1.6749,0.5669,True,quali x shrinkage,1.0.0
+Aston Martin,Dutch Grand Prix,12,1.7727,11,2,3.1011,1.005,0.5669,True,quali x shrinkage,1.0.0
+Audi,Dutch Grand Prix,12,1.5,11,2,1.1011,0.8504,0.5669,True,quali x shrinkage,1.0.0
+Mercedes,Dutch Grand Prix,12,0.1364,11,2,1.2829,0.0773,0.5669,True,quali x shrinkage,1.0.0
+Racing Bulls,Dutch Grand Prix,12,0.0,11,2,-1.8989,0.0,0.5669,True,quali x shrinkage,1.0.0
+Alpine,Dutch Grand Prix,12,-0.0909,11,2,-1.5807,-0.0515,0.5669,True,quali x shrinkage,1.0.0
+Williams,Dutch Grand Prix,12,-0.4091,11,2,-2.3534,-0.2319,0.5669,True,quali x shrinkage,1.0.0
+Red Bull Racing,Dutch Grand Prix,12,-0.6364,11,2,-0.2625,-0.3608,0.5669,True,quali x shrinkage,1.0.0
+Ferrari,Dutch Grand Prix,12,-1.0455,11,2,-0.0807,-0.5927,0.5669,True,quali x shrinkage,1.0.0
+Cadillac,Dutch Grand Prix,12,-1.5909,11,2,1.1011,-0.9019,0.5669,True,quali x shrinkage,1.0.0
+Haas F1 Team,Dutch Grand Prix,12,-2.3636,11,2,-1.6261,-1.34,0.5669,True,quali x shrinkage,1.0.0
+McLaren,Hungarian Grand Prix,11,2.4091,11,2,3.862,1.3657,0.5669,True,quali x shrinkage,1.0.0
+Aston Martin,Hungarian Grand Prix,11,2.3182,11,2,3.8709,1.3142,0.5669,True,quali x shrinkage,1.0.0
+Ferrari,Hungarian Grand Prix,11,2.2273,11,2,0.1436,1.2626,0.5669,True,quali x shrinkage,1.0.0
+Racing Bulls,Hungarian Grand Prix,11,1.0909,11,2,1.0527,0.6184,0.5669,True,quali x shrinkage,1.0.0
+Audi,Hungarian Grand Prix,11,0.4091,11,2,1.8709,0.2319,0.5669,True,quali x shrinkage,1.0.0
+Alpine,Hungarian Grand Prix,11,-0.0909,11,2,-2.9927,-0.0515,0.5669,True,quali x shrinkage,1.0.0
+Red Bull Racing,Hungarian Grand Prix,11,-0.0909,11,2,3.2345,-0.0515,0.5669,True,quali x shrinkage,1.0.0
+Haas F1 Team,Hungarian Grand Prix,11,-0.7273,11,2,-4.1291,-0.4123,0.5669,True,quali x shrinkage,1.0.0
+Cadillac,Hungarian Grand Prix,11,-1.5909,11,2,-4.1291,-0.9019,0.5669,True,quali x shrinkage,1.0.0
+Williams,Hungarian Grand Prix,11,-2.5909,11,2,-3.22,-1.4688,0.5669,True,quali x shrinkage,1.0.0
+Mercedes,Hungarian Grand Prix,11,-3.1364,11,2,-1.22,-1.778,0.5669,True,quali x shrinkage,1.0.0
+Alpine,Italian Grand Prix,13,7.9167,12,2,,4.488,0.5669,False,quali x shrinkage,1.0.0
+Haas F1 Team,Italian Grand Prix,13,1.3333,12,2,,0.7559,0.5669,False,quali x shrinkage,1.0.0
+Cadillac,Italian Grand Prix,13,0.5417,12,2,,0.3071,0.5669,False,quali x shrinkage,1.0.0
+Audi,Italian Grand Prix,13,0.375,12,2,,0.2126,0.5669,False,quali x shrinkage,1.0.0
+Ferrari,Italian Grand Prix,13,0.0417,12,2,,0.0236,0.5669,False,quali x shrinkage,1.0.0
+Williams,Italian Grand Prix,13,-0.375,12,2,,-0.2126,0.5669,False,quali x shrinkage,1.0.0
+McLaren,Italian Grand Prix,13,-0.7917,12,2,,-0.4488,0.5669,False,quali x shrinkage,1.0.0
+Aston Martin,Italian Grand Prix,13,-1.375,12,2,,-0.7795,0.5669,False,quali x shrinkage,1.0.0
+Mercedes,Italian Grand Prix,13,-1.875,12,2,,-1.0629,0.5669,False,quali x shrinkage,1.0.0
+Racing Bulls,Italian Grand Prix,13,-2.5,12,2,,-1.4173,0.5669,False,quali x shrinkage,1.0.0
+Red Bull Racing,Italian Grand Prix,13,-3.0833,12,2,,-1.7479,0.5669,False,quali x shrinkage,1.0.0
+Alpine,Japanese Grand Prix,3,1.5455,11,2,-0.1663,0.8761,0.5669,True,quali x shrinkage,1.0.0
+Audi,Japanese Grand Prix,3,1.5,11,2,0.3337,0.8504,0.5669,True,quali x shrinkage,1.0.0
+McLaren,Japanese Grand Prix,3,1.3182,11,2,2.312,0.7473,0.5669,True,quali x shrinkage,1.0.0
+Mercedes,Japanese Grand Prix,3,1.2273,11,2,2.1519,0.6957,0.5669,True,quali x shrinkage,1.0.0
+Cadillac,Japanese Grand Prix,3,0.5909,11,2,0.3337,0.335,0.5669,True,quali x shrinkage,1.0.0
+Haas F1 Team,Japanese Grand Prix,3,0.3636,11,2,0.3337,0.2061,0.5669,True,quali x shrinkage,1.0.0
+Williams,Japanese Grand Prix,3,-0.4091,11,2,-2.5754,-0.2319,0.5669,True,quali x shrinkage,1.0.0
+Ferrari,Japanese Grand Prix,3,-0.5,11,2,0.7883,-0.2835,0.5669,True,quali x shrinkage,1.0.0
+Racing Bulls,Japanese Grand Prix,3,-1.0909,11,2,-1.0299,-0.6184,0.5669,True,quali x shrinkage,1.0.0
+Aston Martin,Japanese Grand Prix,3,-1.5,11,2,-1.4845,-0.8504,0.5669,True,quali x shrinkage,1.0.0
+Red Bull Racing,Japanese Grand Prix,3,-2.8182,11,2,-2.6663,-1.5976,0.5669,True,quali x shrinkage,1.0.0
+Alpine,Miami Grand Prix,4,4.2727,11,2,2.0155,2.4222,0.5669,True,quali x shrinkage,1.0.0
+Aston Martin,Miami Grand Prix,4,2.8636,11,2,1.2428,1.6234,0.5669,True,quali x shrinkage,1.0.0
+Haas F1 Team,Miami Grand Prix,4,2.5455,11,2,1.9701,1.443,0.5669,True,quali x shrinkage,1.0.0
+Williams,Miami Grand Prix,4,2.3182,11,2,5.6064,1.3142,0.5669,True,quali x shrinkage,1.0.0
+Cadillac,Miami Grand Prix,4,0.5909,11,2,0.8792,0.335,0.5669,True,quali x shrinkage,1.0.0
+Ferrari,Miami Grand Prix,4,0.0455,11,2,-2.4845,0.0258,0.5669,True,quali x shrinkage,1.0.0
+McLaren,Miami Grand Prix,4,-0.3182,11,2,2.862,-0.1804,0.5669,True,quali x shrinkage,1.0.0
+Mercedes,Miami Grand Prix,4,-0.4091,11,2,1.6064,-0.2319,0.5669,True,quali x shrinkage,1.0.0
+Racing Bulls,Miami Grand Prix,4,-2.7273,11,2,-7.5754,-1.5461,0.5669,True,quali x shrinkage,1.0.0
+Audi,Miami Grand Prix,4,-3.4091,11,2,-4.0299,-1.9326,0.5669,True,quali x shrinkage,1.0.0
+Red Bull Racing,Miami Grand Prix,4,-5.5455,11,2,-3.7572,-3.1437,0.5669,True,quali x shrinkage,1.0.0
+Williams,Monaco Grand Prix,6,5.0455,11,2,1.5167,2.8603,0.5669,True,quali x shrinkage,1.0.0
+Red Bull Racing,Monaco Grand Prix,6,3.7273,11,2,3.0622,2.113,0.5669,True,quali x shrinkage,1.0.0
+Cadillac,Monaco Grand Prix,6,1.1364,11,2,-0.4833,0.6442,0.5669,True,quali x shrinkage,1.0.0
+Ferrari,Monaco Grand Prix,6,1.1364,11,2,1.0622,0.6442,0.5669,True,quali x shrinkage,1.0.0
+Alpine,Monaco Grand Prix,6,1.0,11,2,-0.9833,0.5669,0.5669,True,quali x shrinkage,1.0.0
+Mercedes,Monaco Grand Prix,6,-0.9545,11,2,-4.1197,-0.5411,0.5669,True,quali x shrinkage,1.0.0
+Aston Martin,Monaco Grand Prix,6,-1.5,11,2,3.1531,-0.8504,0.5669,True,quali x shrinkage,1.0.0
+Racing Bulls,Monaco Grand Prix,6,-1.6364,11,2,3.6076,-0.9277,0.5669,True,quali x shrinkage,1.0.0
+Audi,Monaco Grand Prix,6,-2.3182,11,2,-1.5742,-1.3142,0.5669,True,quali x shrinkage,1.0.0
+McLaren,Monaco Grand Prix,6,-2.5,11,2,-1.2618,-1.4173,0.5669,True,quali x shrinkage,1.0.0
+Haas F1 Team,Monaco Grand Prix,6,-2.9091,11,2,-2.1197,-1.6492,0.5669,True,quali x shrinkage,1.0.0
+Audi,Spanish Grand Prix,7,2.0455,11,2,0.6312,1.1596,0.5669,True,quali x shrinkage,1.0.0
+Racing Bulls,Spanish Grand Prix,7,1.6364,11,2,1.9949,0.9277,0.5669,True,quali x shrinkage,1.0.0
+Red Bull Racing,Spanish Grand Prix,7,1.5455,11,2,2.5403,0.8761,0.5669,True,quali x shrinkage,1.0.0
+Mercedes,Spanish Grand Prix,7,0.6818,11,2,-5.1869,0.3865,0.5669,True,quali x shrinkage,1.0.0
+Cadillac,Spanish Grand Prix,7,0.5909,11,2,0.6312,0.335,0.5669,True,quali x shrinkage,1.0.0
+McLaren,Spanish Grand Prix,7,-0.3182,11,2,1.512,-0.1804,0.5669,True,quali x shrinkage,1.0.0
+Haas F1 Team,Spanish Grand Prix,7,-0.7273,11,2,-1.0051,-0.4123,0.5669,True,quali x shrinkage,1.0.0
+Williams,Spanish Grand Prix,7,-0.9545,11,2,-0.096,-0.5411,0.5669,True,quali x shrinkage,1.0.0
+Alpine,Spanish Grand Prix,7,-1.1818,11,2,2.8585,-0.67,0.5669,True,quali x shrinkage,1.0.0
+Aston Martin,Spanish Grand Prix,7,-1.5,11,2,-2.2779,-0.8504,0.5669,True,quali x shrinkage,1.0.0
+Ferrari,Spanish Grand Prix,7,-1.5909,11,2,-3.2779,-0.9019,0.5669,True,quali x shrinkage,1.0.0

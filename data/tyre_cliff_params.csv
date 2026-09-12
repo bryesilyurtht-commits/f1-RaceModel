@@ -1,0 +1,4 @@
+Compound,W,m,shape_source,n_long_profiles,share_past_cliff,reject_reason,soft_over_medium,hard_over_medium
+SOFT,1.2,2.6,hand-set,6,,only 6 long profiles (need 10),0.9750505368162253,0.9928020954569741
+MEDIUM,1.8,2.2,hand-set,32,0.875,"optimum on the grid boundary (W=0.6, m=1.0)",0.9750505368162253,0.9928020954569741
+HARD,2.4,1.9,hand-set,53,0.8490566037735849,"optimum on the grid boundary (W=0.4, m=1.0)",0.9750505368162253,0.9928020954569741

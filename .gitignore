@@ -45,4 +45,5 @@ Thumbs.db
 
 # One-off publishing helper for this machine. Useful here, noise in a clone.
 github_yayinla.bat
-github_yayinla_log.txt
+github_guncelle.bat
+github_*_log.txt

@@ -42,3 +42,6 @@ Thumbs.db
 # Scratch
 Çöp/
 *.log
+
+# One-off publishing helper for this machine. Useful here, noise in a clone.
+github_yayinla.bat

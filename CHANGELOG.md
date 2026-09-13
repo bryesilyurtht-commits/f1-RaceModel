@@ -1,5 +1,80 @@
 # Changelog
 
+## v2.7 - the start, measured
+
+The grid no longer simply holds through lap one. Cars draw a start, the draw is
+resolved into an order, and the order is one the archive supports.
+
+**What the lock was.** `LOCK_START_ORDER` gave every car the time gap its slot
+implied and then sorted those times back onto the starting order, so the field
+left the line realistically spread and nobody was ever promoted. It is now
+derived from `START_MODEL` rather than set, and it is kept because "the start
+does nothing" is the baseline the new start has to be read against.
+
+**What it was replaced with.** One time drawn per car, sorted into an order.
+Not a per-driver "gains three places": two cars cannot be promoted into the
+same slot, a place gained is a place someone else lost, and every active car
+appears exactly once because the result is a sort rather than a set of
+independent draws needing repair afterwards.
+
+**Calibration.** 1313 racing starts from 72 races, 2022-25. The measurement is
+in `starts.py`, and the cleaning is most of it: a driver who starts eighth and
+runs sixth has not passed two cars if two cars ahead retired at turn one,
+pitted, or started from the pit lane. Places are counted among the cars that
+were actually racing, so 513 car-races were classified out of the sample rather
+than silently counted as successful starts.
+
+- `START_SPREAD` = 2.60 positions, pooled. Per-circuit spread runs 1.21 to 3.00
+  across the fifteen circuits with enough data, which looks like circuit
+  character until it is tested: permuting race labels between circuits
+  reproduces it 49% of the time (p = 0.489). Three races cannot tell a fast
+  start from a lucky one.
+- `START_CHAOS_PROFILE` replaces the linear ramp from `START_FRONT_STABILITY`
+  to 1.0. The measured exposure is not a ramp - it is flat at the front, peaks
+  around slot thirteen and falls again at the back, where there is less room to
+  lose places than to gain them. `START_FRONT_STABILITY` survives as the first
+  entry, 0.34, so the constant the brief names still has a value and a source.
+  It was 0.35, chosen, which was close by accident and applied through a shape
+  that gave pole the midfield's exposure.
+
+**Grid side: no coefficient.** The first test scored each car against its own
+slot's mean and compared odd against even. It returned exactly zero, and it had
+to - parity is a deterministic function of the slot, so the test could not have
+found anything. Rebuilt to test what is actually identifiable, per-circuit
+parity effects that disagree with each other, it gives p = 0.248 over 25
+circuits. The model carries no side term. That is a simplification, not a
+finding that the sides are equal.
+
+**Lap one is not double counted, and not zeroed either.** `order` is carried
+between laps and moved by the overtaking sweep, not rebuilt by sorting the
+clock, so that sweep is the mechanism that turns the start's times into
+positions. Switching it off on lap one - the obvious reading of "do not apply
+overtaking twice" - stops the start happening at all: every slot's hold rate
+went to 97-100% and field-wide change SD to 0.50 against an observed 1.81. The
+start owns lap one by owning the times, and `START_SPREAD` is fitted against
+the lap-one order the loop actually produces.
+
+**What it does to the race: almost nothing.** Over 10,000 runs, mean absolute
+change in win probability is 0.0005 and in expected finishing position 0.008
+places. Across 53 laps the lap-one reshuffle washes out as cars find the order
+their pace implies. This is worth stating plainly: v2.7 makes lap one resemble
+lap one, and it is not evidence of a better race prediction.
+
+**Where it does not fit.** The model reproduces the field-wide spread (1.93
+against 1.81 measured) but not the retention profile. Pole leads at the end of
+lap one 38% of the time in the model against 78% in the archive. Some of that
+gap is a mismatch in the comparison - one circuit with one 2026 grid against 72
+races where pole is usually the quickest car - and some is real. It is not
+patched with a hand-set front-row protection, which would be the double
+counting §8 of the brief warns about.
+
+**Restarts stay separate.** A red-flag restart already used the running order
+rather than the original grid and shares the standing-start core, which is
+correct. A safety-car restart never called it and still does not.
+
+**New.** `starts.py` and the two tables it writes, 17 tests in `test_starts.py`,
+and `lap_one_order` on the diagnostic so the calibration stays checkable.
+
 ## v2.6 - the measuring instrument, and what it has measured so far
 
 No model behaviour changed. `simulate.py` and `target_race.py` gained three

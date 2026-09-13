@@ -57,6 +57,17 @@ inside a quarter second to 0.10 approaching a full one - and it was missing
 until v1.5. A team term from measured wheel-to-wheel strength sits on top,
 shrunk to what a permutation test supports.
 
+**The start.** Cars draw a start time and the order falls out of sorting them,
+so a place gained is a place someone else lost and nobody is promoted into an
+occupied slot. It is calibrated on 1313 racing starts - places counted only
+among the cars that were actually racing, because a driver who inherits two
+places from a retirement in front has passed nobody. Pole is exposed to about a
+third of the spread the midfield sees, which is measured rather than assumed.
+
+It changes lap one and it barely touches the finish: over 10,000 runs, turning
+it off moves a win probability by 0.0005 on average. Across a race distance the
+first lap washes out.
+
 **Neutralisation.** Safety cars, virtual safety cars and red flags, with
 rates measured per circuit and shrunk toward the calendar where a circuit has
 too few races to speak for itself. The field bunches behind a safety car and
@@ -142,6 +153,8 @@ app.py                      the interface
 Simülasyon/
   simulate.py               the race model, and run() for the interface
   reactive_strategy.py      when to pit, priced against rivals and traffic
+  starts.py                 the start and lap one, measured
+  backtest.py               scoring a prediction against what happened
   weather.py                rain, a drying track, and the tyre that suits it
   wet_conditions.py         what the lap data can and cannot say about rain
   dnf.py                    accidents, failures, and the flags they bring out
@@ -236,6 +249,7 @@ python -m Simülasyon.test_dnf                   # 37
 python -m Simülasyon.test_parameters            # 25
 python -m Simülasyon.test_pipeline              # 22
 python -m Simülasyon.test_backtest              # 33
+python -m Simülasyon.test_starts                # 17
 python -m Simülasyon.Tyre_model.test_tyre_curve # 58
 ```
 

@@ -162,15 +162,62 @@ ENFORCE_STINT_CAP = True
 # midfield funnels into the first corner three abreast. Applying the field-wide
 # figure to everyone had pole losing the lead about half the time. Front of the
 # grid gets this share of the chaos, the back gets all of it.
-START_FRONT_STABILITY = 0.35
+# v2.7 replaced the grid lock with a start that is allowed to change the order,
+# calibrated against 1313 racing starts from 72 races, 2022-25.
+#
+# START_MODEL off restores v2.6 exactly: the same gaps, sorted back onto the
+# starting order so nobody is promoted. It is kept because "the start does
+# nothing" is the comparison the new model has to be read against.
+START_MODEL = True
+
+# The spread of the start, in positions, pooled across circuits.
+#
+# Pooled rather than per-circuit deliberately. Per-circuit start spread runs
+# from 1.21 to 3.00 across the fifteen circuits with forty observations, which
+# looks like circuit character until it is tested: permuting race labels
+# between circuits reproduces that much spread 49% of the time (p = 0.489, 2000
+# permutations). Three races a circuit cannot tell a fast start from a lucky
+# one, so the calendar gets one number.
+#
+# The per-circuit `start_sigma` in grid_stats.csv is a different quantity - it
+# was measured grid-to-finish, not grid-to-lap-one - and using it here was
+# understating the start by about a third.
+START_SPREAD = 2.60
+
+# How much of the field-wide spread each grid slot is exposed to.
+#
+# This was a single number, 0.35, chosen, with the exposure ramping linearly
+# from it at the front to 1.0 at the back. Measured, the shape is not a ramp:
+# pole's change SD is 0.71, it rises to about 2.3 by slot thirteen and falls
+# again towards the back of the grid, where there is less room to lose places
+# than to gain them. A straight line cannot be flat at the front and peaked in
+# the middle, and fitting one meant the pole position got the midfield's
+# exposure.
+#
+# So the profile is read from the measurement - starts.py writes it - and
+# smoothed, with the pole slot kept at its observed value because it is both
+# the most informative point and the one a smooth curve pulls hardest.
+# START_FRONT_STABILITY survives as what the first entry means, so that the
+# quantity the brief names still has a value and a source.
+START_CHAOS_PROFILE = (0.34, 0.59, 0.67, 0.74, 0.81, 0.86, 0.91, 0.94, 0.97,
+                       0.99, 1.00, 1.00, 0.99, 0.98, 0.95, 0.92, 0.87, 0.82,
+                       0.76, 0.69)
+START_FRONT_STABILITY = START_CHAOS_PROFILE[0]
 
 # The first lap is its own event - launch, slipstream to turn one, contact -
-# and none of it is the steady-state pace model used for the other laps. Until
-# that gets modelled properly the grid simply holds: cars still leave with the
-# time gaps their slots give them, so the race is not restarted from zero, but
-# nobody changes place on lap one. Set False to let the start play out under the
-# normal overtaking rules.
-LOCK_START_ORDER = True
+# and none of it is the steady-state pace model used for the other laps. Before
+# v2.7 that gap was held open by locking the grid: cars left with the time gaps
+# their slots gave them, so the race was not restarted from zero, but nobody
+# changed place on lap one.
+#
+# v2.7 measured the start instead, so the lock is now derived rather than set.
+# It is what START_MODEL being off means, kept as its own name because that is
+# the baseline the calibrated start is compared against.
+#
+# This flag was only ever about the artificial hold on a green-flag start. The
+# real prohibitions - no passing under safety car, virtual safety car or red
+# flag - live in the neutralisation code and are untouched by it.
+LOCK_START_ORDER = not START_MODEL
 
 # neutralization behaviour
 SC_LAP_PENALTY = 15.0
@@ -1495,13 +1542,39 @@ def build_start_gaps(order_positions, n_drivers, track, rng, shape,
     first cars launch into clean air on a single line, while the pack funnels
     into turn one three abreast. START_FRONT_STABILITY sets how much of the
     field-wide spread the front gets; the back gets all of it.
+
+    One draw, one order
+    -------------------
+    Every car's time is drawn once and the order falls out of sorting them. It
+    is not a per-car "gains three places": two cars cannot be promoted into the
+    same slot, a car that gains one is a car that someone else lost, and the
+    result contains every active car exactly once because it is a sort. The
+    alternative - drawing a position change per driver - has to be repaired
+    afterwards, and the repair is where a processing-order bias gets in.
+
+    The time scale is approximate and named as such. Grid slots are converted
+    to seconds through the circuit's measured gap at the end of lap one, which
+    is a calibration against observed lap-one gaps rather than a claim about
+    acceleration from a standing start.
+
+    What it does not separate
+    -------------------------
+    The launch, the tow down to turn one and the braking are one term. The
+    archive records a position at the end of lap one and nothing inside it, so
+    three coefficients would be three names for one observation. This is
+    combined start performance, and it is not called anything else.
     """
-    chaos = (START_FRONT_STABILITY
-             + (1.0 - START_FRONT_STABILITY)
-             * (order_positions - 1) / max(n_drivers - 1, 1))
-    noise = rng.normal(0.0,
-                       track['start_sigma'] * track['grid_gap'] * chaos,
-                       size=shape)
+    if START_MODEL:
+        spread = START_SPREAD
+        profile = np.asarray(START_CHAOS_PROFILE)
+        index = np.clip(order_positions.astype(int) - 1, 0, len(profile) - 1)
+        chaos = profile[index]
+    else:
+        spread = track['start_sigma']
+        chaos = (START_FRONT_STABILITY
+                 + (1.0 - START_FRONT_STABILITY)
+                 * (order_positions - 1) / max(n_drivers - 1, 1))
+    noise = rng.normal(0.0, spread * track['grid_gap'] * chaos, size=shape)
     gaps = (order_positions - 1) * track['grid_gap'] + noise
 
     if lock_order:
@@ -2231,6 +2304,22 @@ def run_simulation(pace, track, strategies, n_sims, seed=None,
         # been formed
         racing = ~neutral_lap & ~is_restart_lap
 
+        # Lap one is not given a second overtaking process, and it must not be
+        # given zero either.
+        #
+        # `order` is carried between laps and moved by the sweep below, not
+        # rebuilt by sorting the clock each lap. So the sweep is the mechanism
+        # that turns the start's time gaps into positions: switch it off on lap
+        # one and the start stops happening at all - measured, that put every
+        # grid slot's hold rate at 97-100% and the field-wide change SD at 0.50
+        # against an observed 1.81.
+        #
+        # The start therefore owns lap one by owning the times, and the sweep
+        # resolves them the same way it resolves every other lap. What that
+        # leaves is a calibration question rather than a double-counting one:
+        # START_SPREAD is fitted against the lap-one order this loop produces,
+        # not against the draw in isolation.
+
         for sweep in range(ORDER_SWEEPS):
             contested_sweep = sweep == 0      # dice are rolled once per lap
             moved = np.zeros(n_sims, dtype=bool)
@@ -2380,6 +2469,15 @@ def run_simulation(pace, track, strategies, n_sims, seed=None,
                 advance_plan = refit
 
         trace_order[lap] = order.astype(np.int8)
+
+        # The order at the end of lap one, kept across every simulation rather
+        # than only the traced one. v2.7 calibrated the start against measured
+        # grid-to-lap-one change, so this is the quantity that has to be
+        # checkable afterwards - and it is where double counting would show
+        # up, the start draw and lap one's own overtaking both moving cars
+        # through the same stretch of road.
+        if lap == 0:
+            lap_one_order = order.copy()
         # the free change is recorded as a stop so the strategy panel splits
         # the stint there rather than drawing one bar straight through it
         trace_pits[lap] = pitting | refit
@@ -2472,6 +2570,7 @@ def run_simulation(pace, track, strategies, n_sims, seed=None,
         'dnf_sources': dnf_sources,
         'acc_neutral': acc_neutral,
         'bg_neutral': bg_neutral,
+        'lap_one_order': lap_one_order,
         'trace_order': trace_order,
         'trace_pits': trace_pits,
         'trace_laptime': trace_laptime,
@@ -2788,7 +2887,8 @@ def build_param_lines(pace, track, strategies, diag, positions, total):
         f'drivers       {len(pace)}',
         f'grid source   {pace.attrs.get("grid_source", "?")}',
         f'grid gap      {track["grid_gap"]:.3f} s/slot   '
-        f'start sigma {track["start_sigma"]:.2f} pos',
+        f'start spread {(START_SPREAD if START_MODEL else track["start_sigma"]):.2f} pos'
+        f'{" (measured, pooled)" if START_MODEL else " (per circuit)"}',
         f'start chaos   front {START_FRONT_STABILITY:.0%} of field-wide, back 100%',
         f'start order   {"locked to grid" if LOCK_START_ORDER else "raced"}',
         f'delta range   {pace["delta"].min():.3f} to {pace["delta"].max():.3f} s/lap',
@@ -2907,8 +3007,12 @@ RUNTIME_FLAGS = {
     'SC_BUNCHING': 'Close the field up into a queue behind the safety car.',
     'RED_FLAG_ENABLED': 'Allow a red flag: a free tyre change and a standing '
                         'restart in running order.',
+    'START_MODEL': 'Race the start: one draw per car, sorted into an order, '
+                   'calibrated against 1313 measured starts. Off restores the '
+                   'grid lock.',
     'LOCK_START_ORDER': 'Keep the grid order through lap one instead of '
-                        'racing the start.',
+                        'racing the start. Now what START_MODEL being off '
+                        'means, rather than a setting of its own.',
     'DNF_ENABLED': 'Let cars retire. Superseded by the two-cause model, '
                    'which decides why as well as whether.',
     'TWO_CAUSE_DNF': 'Split retirements into accidents and mechanical '

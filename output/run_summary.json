@@ -1,0 +1,70 @@
+{
+  "race": "Italian Grand Prix",
+  "season": 2026,
+  "cutoff": {
+    "race": "Italian Grand Prix",
+    "data_belongs_to": "Italian Grand Prix",
+    "matches": true,
+    "needs": "qualifying complete: grid and pole time",
+    "usable": true,
+    "historical_replay": false
+  },
+  "requested_runs": 10000,
+  "completed_runs": 10000,
+  "seed": 42,
+  "parameter_set": "v2.3-measured",
+  "flags": {
+    "ENFORCE_STINT_CAP": true,
+    "RECOST_STRATEGIES": true,
+    "REACTIVE_PIT": true,
+    "REACTIVE_PIT_V2": true,
+    "NEUTRAL_LAST_LAP_KNOWN": false,
+    "PER_DRIVER_STRATEGY": false,
+    "NEUTRAL_FREEZES_GAPS": true,
+    "SC_BUNCHING": true,
+    "RED_FLAG_ENABLED": true,
+    "LOCK_START_ORDER": true,
+    "DNF_ENABLED": true,
+    "TWO_CAUSE_DNF": true,
+    "ACCIDENT_NEUTRALIZATION": true,
+    "EVOLUTION_ENABLED": true,
+    "AFFINITY_ENABLED": true,
+    "AFFINITY_TEAM_2026": true,
+    "GAP_IN_PASS_MODEL": true,
+    "TEAM_PASS_ENABLED": true,
+    "IS_WET": false,
+    "WEATHER_ENABLED": false,
+    "WEATHER_MAY_BREAK_PLAN": true
+  },
+  "choices": {
+    "WEATHER_SCENARIO": "dry"
+  },
+  "data": {
+    "dnf_driver_risk.csv": "59ba06821b5a9f90",
+    "dnf_profile.csv": "421b1739c1f34506",
+    "dnf_team_risk.csv": "2d6dc0b0c8792ea9",
+    "driver_pace_2026.csv": "9d3d6c0c7a282995",
+    "f1_2026_grid.csv": "b88a6e5826a34984",
+    "f1_2026_laps.csv": "fcaf47a1b11a86c1",
+    "f1_2026_laps_clean.csv": "33e80f7761d27d9f",
+    "f1_2026_poles.csv": "e9b2ea622685dcb4",
+    "f1_2026_quali.csv": "859f9a5d4e33e289",
+    "f1_2026_results.csv": "b2da41f85d021912",
+    "laps_2018_2025.csv": "b954151ca3940026",
+    "neutralization.csv": "3113368b8e16c9af",
+    "overtaking.csv": "9f7d5314300f8d78",
+    "pit_strategies.csv": "7c33ef0d45de6f50",
+    "pit_summary.csv": "3923205723559365",
+    "results_2018_2025.csv": "762ea64aa421c2d3",
+    "team_affinity_2026.csv": "a1d43aba02a58cc2",
+    "tyre_curve_params.json": "9fe422ac1157f516",
+    "wet_profiles.csv": "a4c6164c3a588263"
+  },
+  "versions": {
+    "python": "3.13.12",
+    "numpy": "2.5.2",
+    "pandas": "2.3.3"
+  },
+  "seconds": 23.54,
+  "status": "complete"
+}

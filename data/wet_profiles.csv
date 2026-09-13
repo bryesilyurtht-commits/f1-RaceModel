@@ -1,0 +1,13 @@
+key,value,n,races,kind
+penalty_pct_INTERMEDIATE,0.1351180415462625,3167,13,measured
+sigma_INTERMEDIATE,0.7411347517730484,3167,13,measured
+penalty_pct_WET,0.25233799658537825,237,3,thin
+sigma_WET,1.056072695035458,237,3,thin
+sigma_DRY,0.23581560283688419,149784,171,measured
+crossover_DRY_INTERMEDIATE_instants,32.0,32,11,too thin to fit
+mismatch_INTERMEDIATE_on_dry,12.441000000000003,32,11,thin
+crossover_INTERMEDIATE_WET_instants,40.0,40,7,too thin to fit
+neutral_wet_ratio,2.2448693282026615,567,23,measured
+neutral_wet_lap_share,0.055011157465799945,567,0,measured
+longest_stint_INTERMEDIATE,57.0,636,0,"observed, not a life"
+longest_stint_WET,25.0,94,0,"observed, not a life"

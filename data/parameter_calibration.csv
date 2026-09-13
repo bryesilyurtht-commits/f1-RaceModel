@@ -1,0 +1,7 @@
+parameter,old,new,unit,source,n,holdout
+NOISE_AUTOCORR,0.6,0.155,correlation,measured,61234,0.123
+SC_QUEUE_GAP,0.5,0.72,s,weak proxy,153,
+SC_TIMING_MEAN_FRACTION,0.6,0.38,of race distance,measured,199,
+SC_TIMING_STD_FRACTION,0.2,0.32,of race distance,measured,199,
+SC_SHRINK_RACES,6.0,24.0,pseudo-races,"measured, held out",48,0.6803
+RF_PROB_FLOOR,0.01,0.01,per race,"hand-set, binds often",36,

@@ -47,3 +47,8 @@ Thumbs.db
 github_yayinla.bat
 github_guncelle.bat
 github_*_log.txt
+
+# The data manifest records the state of the local data directory - content
+# hashes of files on this machine. It rebuilds in a second and would otherwise
+# produce a diff on every checkout.
+data/manifest.json

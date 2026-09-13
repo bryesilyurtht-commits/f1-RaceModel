@@ -47,7 +47,11 @@ import warnings
 import numpy as np
 import pandas as pd
 
-import fastf1
+# fastf1 is imported inside collect(), not here. It is only needed to download
+# telemetry, and this module also carries FEATURE_SET and standardise - two
+# pure definitions that team_affinity.py reads. A top-level import made the
+# whole no-network path depend on a package requirements.txt deliberately
+# leaves out, so a fresh clone could not run the team affinity tests.
 
 warnings.filterwarnings('ignore')
 
@@ -610,6 +614,8 @@ def measure(session, event_name):
 
 
 def collect():
+    import fastf1
+
     fastf1.Cache.enable_cache(CACHE_DIR)
     schedule = fastf1.get_event_schedule(SEASON, include_testing=False)
 

@@ -60,11 +60,17 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from Simülasyon import dnf as dnf_model
+from Simülasyon import reactive_strategy as v2
+from Simülasyon import weather as wx
 from Simülasyon.diagnostics import build_report, build_stints, find_representative
 from Simülasyon.fuel_effect import get_track_params
 from Simülasyon.target_race import TARGET_EVENT, TRACK_ALIASES
 from Simülasyon.track_deg import get_track_deg
-from Simülasyon.tracks import (get_track_racing, DIRTY_AIR_RANGE, MIN_GAP,
+# MIN_GAP is deliberately not imported any more. HELD_GAP replaced it in
+# v1.5 with a measured 0.65 and the import sat there unused for two versions;
+# tracks.py still defines it, with the comment explaining why it was wrong.
+from Simülasyon.tracks import (get_track_racing, DIRTY_AIR_RANGE,
                                ATTACK_GAP, HELD_GAP)
 
 from Simülasyon.Tyre_model.tyre_curve import AGE_OFFSET
@@ -88,6 +94,12 @@ SEASON = 2026
 
 N_SIMS = 10_000
 RANDOM_SEED = 42
+
+# Which audited set of constants this run used. parameters.py carries the
+# inventory - every constant, what kind of number it is, what it was measured
+# against, and how much the output moves when it moves. Reverting is one line:
+# parameters.apply(simulate, 'v2.2-legacy').
+PARAM_SET_VERSION = 'v2.3-measured'
 
 # Pole time/driver are read from data/f1_{SEASON}_poles.csv, matched against
 # TRACK_ALIASES the same way everything else is - see resolve_pole() below.
@@ -183,11 +195,24 @@ SC_QUEUE_GAP = 0.5           # seconds between cars once the queue has formed
 MIN_SC_DURATION = 3
 MIN_VSC_DURATION = 1         # a VSC really can be one lap, so this is a no-op
 
-# When neutralizations happen. The start lap was drawn uniformly, which spread
-# them evenly over the race; in practice they cluster after the opening laps
-# have settled and before the run to the flag.
-SC_TIMING_MEAN_FRACTION = 0.60   # of race distance
-SC_TIMING_STD_FRACTION = 0.20
+# When neutralizations happen.
+#
+# This said events cluster after the opening laps have settled. Measured, they
+# do the opposite: 38% of background starts fall in the first quarter of the
+# race and the mean sits at 43% of distance, not 60%.
+#
+# Two things make it a background measurement rather than a total one. Only
+# starts are counted, so a six-lap safety car is one event; and the starts
+# matched to an accident retirement are removed, because v2.2 produces those
+# from the crash itself and fitting them here would be counting them twice.
+#
+#     146 background starts, 2018-2025:  mean 43%, sd 32%, median 42%
+#
+# The spread is wide enough that a normal puts mass outside the race and the
+# sampler clips it. An empirical distribution would be the better model; this
+# keeps the existing shape with honest parameters.
+SC_TIMING_MEAN_FRACTION = 0.43   # of race distance
+SC_TIMING_STD_FRACTION = 0.32
 
 # --- red flag (v1.2) ---
 # The end of the bunching argument. A safety car hands back the leader's gap;
@@ -229,7 +254,17 @@ RF_LATE_LAPS = 10
 # calendar average with this many pseudo-races of weight, so a track with four
 # real observations keeps about 40% of its own number. Set to 0 to use the raw
 # measurement.
-SC_SHRINK_RACES = 6.0
+# Chosen by prediction rather than by feel. Circuit rates estimated on
+# 2018-2023 were scored on whether 48 held-out 2024-25 races had a safety car:
+#
+#     no pooling   1.3848        6 pseudo-races   0.6985   (the old value)
+#     3            0.7276       12                0.6847
+#                              24                0.6803   <- best
+#
+# The headline is the first column: per-circuit rates built on four races are
+# mostly noise, and pooling them away is worth half a nat. Six was a guess in
+# the right direction and too timid.
+SC_SHRINK_RACES = 24.0
 SC_DEFAULT_RACES = 4.0       # assumed when the CSV does not say
 
 # The same treatment for the compound pace offsets, which are measured from
@@ -273,6 +308,44 @@ NOISE_AUTOCORR = 0.60
 DNF_ENABLED = True
 DNF_RATE_PER_RACE = 0.06     # chance a given car fails to see the flag
 
+# --- why a car stops (v2.2) -------------------------------------------------
+# The flat 6% above says nothing about why, and a model that cannot tell an
+# engine failure from a first-corner collision cannot let one of them bring out
+# a safety car either.
+#
+# v2.2 splits it. Accident risk belongs to the driver and mechanical risk to
+# the car, both measured per lap at risk rather than per race, both pulled
+# toward the field where the sample is thin. dnf.py carries them;
+# retirements.py is what measured them.
+#
+# Three things the measurement disagreed with, all kept as measured:
+#
+#   the timing      A bell through the race was proposed. On hazard it is
+#                   slightly rising and flat wins on AIC, so the model is flat.
+#   the flag        "About 90% of accident retirements bring out a safety car"
+#                   was assumed. Matched to the neutralizations that actually
+#                   started: 49.6%.
+#   the total       The measured pair comes to about 8.8% per car over this
+#                   race distance, against the 6% hand-set above - but they
+#                   cover only the retirements whose cause the data states, and
+#                   a third of them say nothing.
+#
+# That last gap is reported and never filled by redistributing the unexplained
+# ones over the two known causes.
+TWO_CAUSE_DNF = True
+
+# Accidents feed the same neutralization manager the background rate feeds.
+# There is no second safety-car process: the background rate is scaled to the
+# share of starts that were not matched to an accident, and accidents supply
+# the rest. Switching this off leaves the background rate at full strength,
+# which is what every version before this one did.
+ACCIDENT_NEUTRALIZATION = True
+
+# A dial on the pair, for when the measured total is not what is wanted. 1.0
+# is the measurement. It scales both causes together, so the split between
+# them is untouched.
+DNF_SCALE = 1.0
+
 # --- track evolution ---
 # Measured by track_evolution.py and until now unused. Centred on the race
 # midpoint for the same reason as fuel: delta was measured from race medians
@@ -282,7 +355,11 @@ EVOLUTION_ENABLED = True
 
 AUTO_PASS_MARGIN = 1.20      # s of time advantage that no defence can hold off
 ORDER_SWEEPS = 12            # passes over the order, so a pit stop can drop a car far
-POOLED_THRESHOLD = 1.60      # s/lap advantage at 50% per-lap pass odds
+# POOLED_THRESHOLD is read by nothing. track_threshold() solves for the
+# threshold from each circuit's measured base rate instead, which is what
+# replaced it. Kept as a note rather than deleted, because the comment below
+# still describes the shape the model uses.
+POOLED_THRESHOLD = 1.60      # unused since the threshold became per-circuit
 POOLED_SCALE = 0.52          # how sharp that transition is
 REFERENCE_ADVANTAGE = 0.50   # advantage the measured base rate corresponds to
 MAX_PASS_PROB = 0.85
@@ -399,6 +476,91 @@ MAX_STRATEGIES = 8
 REACTIVE_PIT = True
 PIT_DECISION_BAND = 5        # laps either side of the planned stop
 
+# --- reactive strategy (v2.0) -----------------------------------------------
+# The v1.1 rule above is a conversation the car has with its own tyre. It is a
+# good conversation and it is the wrong one to have alone: a stop is worth
+# what it is worth after the car rejoins, and where it rejoins depends on
+# twenty other cars.
+#
+# v2.0 keeps the plan - same number of stops, same compound order - and moves
+# only the lap, by pricing every candidate lap in the window against a horizon
+# they all share. reactive_strategy.py carries the decision; this file supplies
+# the state and applies the answer.
+#
+# Off, the v1.1 rule runs unchanged and consumes no random numbers differently,
+# so the same seed reproduces the same race bit for bit. That is the point of
+# the switch: the comparison has to be available, not asserted.
+REACTIVE_PIT_V2 = True
+
+# Detailed traffic is priced over this many laps after a candidate stop.
+# A computation boundary rather than a measurement - see reactive_strategy.py.
+V2_TRAFFIC_LAPS = 3
+
+# Which simulation keeps a full decision log. Ten thousand races of decision
+# arithmetic is tens of megabytes nobody reads; one race is checkable.
+V2_LOG_SIM = 0
+
+# Whether the decision may know which lap a neutralization ends on.
+#
+# v1.1 barred the opportunistic stop on a neutralization's last lap. The stated
+# reason was mechanical - pit loss and safety-car bunching rewriting the same
+# gaps on one lap - but the test reads neutral[:, lap + 1], and that lap has
+# not happened. A race engineer does not know which lap is the last one. The
+# simulator only knows because it drew the schedule before the race started.
+#
+# Under v2.0 the test is dropped, which means a car can now take a cheap stop
+# on the lap the field bunches. Nothing downstream breaks on that: the bunching
+# pass runs on the finished `total`, after the pit loss is already in it, so
+# the car is compressed into the queue from where its stop actually left it.
+# That is also what happens at a real restart.
+#
+# Set True to keep the v1.1 behaviour while still running the v2.0 decision.
+NEUTRAL_LAST_LAP_KNOWN = False
+
+# --- wet racing (v2.1) ------------------------------------------------------
+# Until now "wet" meant one thing: IS_WET multiplied the safety-car rate by
+# 1.8 and nothing else in the race changed. No wet tyre existed, every wet lap
+# in the 2018-2025 data was filtered out of every measurement, and a wet race
+# was a dry race with more yellow flags.
+#
+# v2.1 adds rain that can arrive and leave, a track that takes laps to wet and
+# laps to dry, INTERMEDIATE and WET as real categories, and a decision to
+# change between them. weather.py carries all of it; this file supplies the
+# state and applies the answer.
+#
+# What is measured and what is not is set out in weather.py and in
+# wet_conditions.py, which is the module that went and looked. The short
+# version: the pace penalties and the lap-time spread are measured over
+# thousands of laps, the neutralization rate is measured and is 2.24x rather
+# than the 1.8x above, and the crossover between categories is a scenario -
+# 32 lap-instants is not enough to fit one, and pretending otherwise would be
+# the worst thing in this file.
+WEATHER_ENABLED = False        # off by default: this circuit has no rain forecast
+WEATHER_SCENARIO = 'dry'       # any key in weather.SCENARIOS
+
+# The weather draws from its own generator, not the race's. Two runs that
+# differ only in scenario then get the same grid, the same retirements and the
+# same overtaking dice, so the difference between them is the weather and not
+# a reshuffled random stream. It also means a dry scenario cannot perturb
+# anything, which is what makes v2.1 switchable at all.
+WEATHER_SEED_OFFSET = 90_001
+
+# A weather change is the one thing allowed to move the plan, and only to the
+# extent of fitting the right category and getting to the flag. This is a new
+# exception to v2.0's rule that the plan is fixed - proposed by the v2.1
+# roadmap, not something decided earlier - and it is deliberately narrow: no
+# general strategy re-optimisation is opened up by it.
+WEATHER_MAY_BREAK_PLAN = True
+
+# Which simulation keeps a weather decision log, alongside V2_LOG_SIM.
+WEATHER_LOG_SIM = 0
+
+# The real pit loss is the first defence against changing tyres every lap, and
+# mostly it is enough. This is the second: a set has to have done two laps
+# before it can be given up, so a forecast that wobbles across the crossover
+# cannot bounce a car in and out of the pit lane on consecutive laps.
+WEATHER_MIN_STINT = 2
+
 # Strategies used to be priced per driver, scaling the tyre curve by that
 # driver's deg_index so someone hard on tyres reached the cliff sooner and was
 # offered less of a soft-heavy plan.
@@ -466,6 +628,10 @@ AFFINITY_QUALI_SHARE = 0.50
 OPEN_REPORT = True           # open the HTML report in a browser when done
 
 COMPOUND_NAMES = ['SOFT', 'MEDIUM', 'HARD']
+
+# What v2.3 moved, so the interface can say so without importing the audit.
+PARAM_SET_CHANGED = ('SC_TIMING_MEAN_FRACTION', 'SC_TIMING_STD_FRACTION',
+                     'SC_SHRINK_RACES')
 
 # --- input loading ----------------------------------------------------------
 
@@ -771,13 +937,21 @@ def build_cum_table(track, n_laps):
     max_age = n_laps + 2
     tyre_life = np.arange(0, max_age + 1)
 
-    cum = np.zeros((3, max_age + 1))
+    cum = np.zeros((len(wx.CATEGORY_NAMES), max_age + 1))
     for ci, comp in enumerate(COMPOUND_NAMES):
         curve = track['tyre'][comp]
         ages = np.clip(tyre_life - AGE_OFFSET, 0, curve.max_age)
         pen = curve_penalty(curve, ages)
         pen[0] = 0.0
         cum[ci] = np.cumsum(pen)
+
+    # The wet rows are the assumed linear rate, accumulated the same way, so
+    # every rule that reads this table - the v1.1 margin, v2.0's candidates -
+    # keeps working when a car is on inters instead of failing an index.
+    for ci in wx.WET_CATEGORIES:
+        pen = wx.wet_wear(ci, tyre_life) - wx.wet_wear(ci, tyre_life - 1)
+        pen[0] = 0.0
+        cum[ci] = np.cumsum(np.maximum(pen, 0.0))
     return cum
 
 
@@ -1140,7 +1314,7 @@ def assign_strategies(strategies, n_sims, n_drivers, rng, cost_matrix=None):
 # --- neutralization ---------------------------------------------------------
 
 
-def sample_neutralizations(sc, n_sims, n_laps, rng):
+def sample_neutralizations(sc, n_sims, n_laps, rng, lam_scale=None):
     """
     (n_sims, n_laps): 0 green, 1 VSC, 2 SC, 3 red flag. One draw per race,
     shared by every car in it.
@@ -1162,7 +1336,11 @@ def sample_neutralizations(sc, n_sims, n_laps, rng):
             (1, 'vsc_lambda', 'vsc_duration', MIN_VSC_DURATION)]:
         lam = max(sc[lam_key], 0.0)
         mean_dur = max(sc[dur_key], 1.0)
-        counts = rng.poisson(lam, size=n_sims)
+        # A per-simulation rate when the race is wet, one scalar otherwise.
+        # The scalar path is left exactly as it was so a dry race draws the
+        # same numbers it always drew.
+        counts = (rng.poisson(lam * np.asarray(lam_scale), size=n_sims)
+                  if lam_scale is not None else rng.poisson(lam, size=n_sims))
         for sim in np.flatnonzero(counts):
             for _ in range(counts[sim]):
                 start = int(np.clip(rng.normal(mean_lap, std_lap), 1, last_start))
@@ -1336,7 +1514,11 @@ def run_simulation(pace, track, strategies, n_sims, seed=None,
     delta = pace['delta'].to_numpy()
     sigma = pace['sigma'].to_numpy()
     grid = pace['grid'].to_numpy(dtype=float)
-    offsets = np.array([track['offsets'].get(c, 0.0) for c in COMPOUND_NAMES])
+    # The wet categories carry no compound offset: their pace against dry
+    # comes from the condition and mismatch terms, and giving them an offset
+    # as well would be the same effect entered twice.
+    offsets = np.array([track['offsets'].get(c, 0.0)
+                        for c in wx.CATEGORY_NAMES[:3]] + [0.0, 0.0])
 
     # The whole tyre model, as one lookup table: PENALTY[c, t] is what a
     # compound-c tyre costs on the lap it enters at TyreLife t. Built from the
@@ -1346,11 +1528,17 @@ def run_simulation(pace, track, strategies, n_sims, seed=None,
     # Rows are clamped at each curve's own max_age. That clamp is the only
     # thing standing between the simulation and a silently extrapolated
     # number, so ENFORCE_STINT_CAP has to stay on for it to never bind.
+    # Five rows, not three. The dry compounds keep indices 0-2 so every table,
+    # every strategy and every saved result still means what it meant; the two
+    # wet categories are appended. Their rows are a straight line rather than a
+    # fitted curve, because a drying track makes an inter quicker as it ages
+    # and no amount of staring at lap times separates that from wear.
     max_life = n_laps + 2
     tyre_life_grid = np.arange(0, max_life + 1)
-    penalty_table = np.zeros((3, max_life + 1))
-    cap_life = np.zeros(3, dtype=np.int64)
-    cliff_life_by_compound = np.full(3, np.inf)
+    n_cat = len(wx.CATEGORY_NAMES)
+    penalty_table = np.zeros((n_cat, max_life + 1))
+    cap_life = np.zeros(n_cat, dtype=np.int64)
+    cliff_life_by_compound = np.full(n_cat, np.inf)
     for ci, comp in enumerate(COMPOUND_NAMES):
         curve = track['tyre'][comp]
         ages = np.clip(tyre_life_grid - AGE_OFFSET, 0, curve.max_age)
@@ -1358,6 +1546,9 @@ def run_simulation(pace, track, strategies, n_sims, seed=None,
         cap_life[ci] = max_stint_laps(curve)
         if curve.tau is not None and curve.gamma > 0:
             cliff_life_by_compound[ci] = curve.tau + AGE_OFFSET
+    for ci in wx.WET_CATEGORIES:
+        penalty_table[ci] = wx.wet_wear(ci, tyre_life_grid)
+        cap_life[ci] = wx.WET_STINT_CAP[ci]
 
     pit_laps, compound_idx, n_stints, plans, stint_len = build_strategy_tables(
         strategies, n_laps)
@@ -1365,11 +1556,46 @@ def run_simulation(pace, track, strategies, n_sims, seed=None,
     strat_idx, strat_weights = assign_strategies(
         strategies, n_sims, n_drivers, rng)
 
+    # --- the weather -----------------------------------------------------
+    # Drawn from its own generator so a dry scenario cannot perturb the race's
+    # random stream by so much as one draw. That is what lets v2.1 be turned
+    # on with a dry scenario and reproduce the dry race exactly, which is the
+    # only way to know the new component is inert when it should be.
+    if WEATHER_ENABLED:
+        rain, wetness = wx.build_paths(
+            WEATHER_SCENARIO, n_sims, n_laps,
+            np.random.default_rng((seed or 0) + WEATHER_SEED_OFFSET))
+    else:
+        rain = np.zeros((n_sims, n_laps), dtype=np.int8)
+        wetness = np.zeros((n_sims, n_laps))
+    any_rain = bool(wetness.max() > 0)
+
     # accumulated tyre loss, so the pit rule is two lookups rather than a loop
     cum_loss = build_cum_table(track, n_laps)
     max_age_idx = cum_loss.shape[1] - 1
 
-    neutral = sample_neutralizations(track['sc'], n_sims, n_laps, rng)
+    # One safety-car process, scaled - not a second one layered on top. The
+    # measured rate already pools wet and dry races, so weather.neutral_lambda
+    # backs the dry-only rate out before applying the wet ratio; multiplying
+    # the pooled figure straight would charge part of the wet twice.
+    sc_params = track['sc']
+    if TWO_CAUSE_DNF and ACCIDENT_NEUTRALIZATION:
+        # The circuit rate was measured over races that contained these
+        # accidents. Leaving it at full strength while accidents also generate
+        # their own counts the same incidents twice, and a race with two
+        # sources of yellow flags is not the race that was measured. 146 of
+        # 199 starts were not matched to an accident retirement; that is what
+        # the background process is scaled to.
+        sc_params = dict(sc_params)
+        for key in ('sc_lambda', 'vsc_lambda'):
+            sc_params[key] = sc_params[key] * dnf_model.BACKGROUND_SHARE
+    if any_rain:
+        sc_params = dict(sc_params)
+        scale = wx.neutral_lambda(1.0, wetness.mean(axis=1))
+        neutral = sample_neutralizations(sc_params, n_sims, n_laps, rng,
+                                         lam_scale=scale)
+    else:
+        neutral = sample_neutralizations(sc_params, n_sims, n_laps, rng)
 
     # Every simulation's running order is kept, not just one. Which race best
     # represents the set can only be judged once all of them have finished, and
@@ -1389,6 +1615,18 @@ def run_simulation(pace, track, strategies, n_sims, seed=None,
 
     tyre_age = np.ones(shape, dtype=np.int32)
     stint_no = np.zeros(shape, dtype=np.int32)
+
+    # What is actually bolted on, which stops being the plan's compound the
+    # moment it rains. stint_no still points at the dry plan; `fitted` is the
+    # tyre. Keeping them apart is what lets a car run inters through a shower
+    # and come back to the compound the plan always wanted.
+    weather_stops = np.zeros(shape, dtype=np.int32)
+    pit_stops = np.zeros(shape, dtype=np.int32)
+    unraceable_laps = np.zeros(shape, dtype=np.int32)
+    wet_laps = np.zeros(shape, dtype=np.int32)
+    wx_reasons = np.zeros(len(wx.SWITCH_REASONS), dtype=np.int64)
+    wx_horizon_agree = []
+    wx_log = []
     n_stops = np.zeros(shape, dtype=np.int32)
     sc_stops = np.zeros(shape, dtype=np.int32)
     laps_stuck = np.zeros(shape, dtype=np.int32)
@@ -1409,13 +1647,52 @@ def run_simulation(pace, track, strategies, n_sims, seed=None,
     retired = np.zeros(shape, dtype=bool)
     retired_lap = np.full(shape, -1, dtype=np.int32)
 
+    # --- v2.2: why, not just whether ---
+    dnf_cause = np.zeros(shape, dtype=np.int8)
+    acc_rate, mech_rate, dnf_sources = dnf_model.rates(pace)
+    mech_shape = dnf_model.timing_shape(n_laps)
+    outcome_labels, outcome_cuts = dnf_model.accident_outcome_table()
+    acc_neutral = np.zeros(n_sims, dtype=np.int32)
+    rf_used = (neutral == 3).any(axis=1)
+    # what the background process put on the schedule before a wheel turned,
+    # so the two sources can be reported apart afterwards
+    started = (neutral > 0)
+    bg_neutral = (started[:, 1:] & ~started[:, :-1]).sum(axis=1).astype(np.int32)
+    bg_neutral += started[:, 0].astype(np.int32)
+    dnf_log = []
+
     my_pit_laps = pit_laps[strat_idx]
     my_compounds = compound_idx[strat_idx]
+
     my_n_stints = n_stints[strat_idx]
     my_lengths = stint_len[strat_idx]
     max_stints = my_compounds.shape[2]
     reactive_pits = np.zeros(shape, dtype=np.int32)
     forced_pits = np.zeros(shape, dtype=np.int32)
+
+    # --- v2.0 bookkeeping ---
+    # last_pit_lap is observable state, not a counter: a car can see that the
+    # man in front stopped two laps ago, and that is what makes staying out an
+    # overcut rather than a delay. -1 means "has not stopped".
+    last_pit_lap = np.full(shape, -1, dtype=np.int32)
+    v2_calls = np.zeros(shape, dtype=np.int32)
+    v2_moved = np.zeros(shape, dtype=np.int64)      # chosen lap - planned lap
+    v2_reasons = np.zeros(len(v2.REASON_NAMES), dtype=np.int64)
+    v2_intents = np.zeros(len(v2.INTENT_NAMES), dtype=np.int64)
+    v2_infeasible = np.zeros(n_sims, dtype=np.int32)
+    v2_log = []
+
+    # What the field starts on. In the dry that is the plan's first compound,
+    # which is what it has always been. If it is already raining when the race
+    # starts, everyone lines up on the category the conditions call for - that
+    # is a choice made in the garage, not a pit stop, and it is not counted as
+    # one. Nobody gets to see the forecast for the rest of the afternoon.
+    fitted = my_compounds[:, :, 0].astype(np.int32)
+    if any_rain:
+        start_wet = np.broadcast_to(wetness[:, 0][:, None], shape)
+        fitted = np.where(start_wet > 0,
+                          wx.best_category(start_wet, my_compounds[:, :, 0]),
+                          fitted).astype(np.int32)
 
     # every curve carries a cap, so there is no infinite case to guard any more
     cap_by_compound = np.minimum(cap_life, n_laps + 1).astype(float)
@@ -1433,6 +1710,20 @@ def run_simulation(pace, track, strategies, n_sims, seed=None,
     pass_model = build_pass_model(track)
     team_shift, team_shift_source = team_pass_shift(pace)
     track['team_pass_source'] = team_shift_source
+
+    # The v2.0 decision reads the same tyre table, the same pass model and the
+    # same dirty-air constants the race itself runs on. Handing it copies would
+    # let the two drift apart, and a strategy priced against a different model
+    # from the one that then races is worse than no strategy model at all.
+    v2_ctx = v2.Context(
+        n_laps=n_laps, cum_loss=cum_loss, cap_by_compound=cap_by_compound,
+        offsets=offsets, pit_loss=track['pit_loss'],
+        pass_prob=pass_probability, pass_model=pass_model,
+        dirty_max=dirty_max, dirty_range=DIRTY_AIR_RANGE,
+        attack_gap=ATTACK_GAP, held_gap=HELD_GAP, band=PIT_DECISION_BAND,
+        traffic_laps=V2_TRAFFIC_LAPS)
+    driver_names = pace['Driver'].to_numpy()
+    ranks0 = np.broadcast_to(np.arange(n_drivers), shape)
 
     dirty_penalty = np.zeros(shape)
 
@@ -1464,7 +1755,12 @@ def run_simulation(pace, track, strategies, n_sims, seed=None,
         is_restart_lap = ((~neutral_lap) & (neutral[:, lap - 1] > 0) if lap > 0
                           else np.zeros(n_sims, dtype=bool))
 
-        current_compound = my_compounds[rows, cols, stint_no]
+        # What is on the car. In the dry this is the plan's compound and
+        # nothing has changed; in the rain the two come apart, and every term
+        # below has to read the tyre rather than the intention.
+        current_compound = fitted
+        w_lap = wetness[:, lap][:, None]
+        rain_lap = rain[:, lap][:, None]
 
         # --- tyre penalty ---------------------------------------------------
         # D(a) for the tyre each car is on, read straight out of the table.
@@ -1492,9 +1788,35 @@ def run_simulation(pace, track, strategies, n_sims, seed=None,
                       - track['fuel_effect'] * (lap - fuel_mid)
                       - track['evo_rate'] * (lap - fuel_mid))
 
-        noise = (NOISE_AUTOCORR * noise
-                 + np.sqrt(1.0 - NOISE_AUTOCORR ** 2)
-                 * rng.normal(0.0, sigma[None, :], size=shape))
+        if any_rain:
+            # Two separate costs. The condition penalty is what the afternoon
+            # charges everybody whatever they fitted - measured against each
+            # race's own dry median, so it is a property of the track and not
+            # of the tyre. The mismatch is what the wrong tyre adds on top.
+            # Splitting them is what stops a slick in the rain being priced as
+            # merely "a wet lap" and what keeps the two from overlapping.
+            clean_pace = clean_pace + POLE_TIME * (
+                wx.condition_pct(w_lap)
+                + wx.mismatch_pct(current_compound, w_lap))
+            wet_laps += (w_lap > 0).astype(np.int32)
+            unraceable_laps += wx.unraceable(current_compound,
+                                             w_lap).astype(np.int32)
+
+        # The wet does not only slow the field down, it spreads it out. A
+        # model that lowered the mean and left the spread alone would make a
+        # wet race more predictable than a dry one, which is backwards.
+        #
+        # The dry branch is the original call, untouched. Drawing a standard
+        # normal and scaling it afterwards is the same distribution and not
+        # the same bits, and a refactor that quietly moves every dry result
+        # is not a refactor.
+        carry = np.sqrt(1.0 - NOISE_AUTOCORR ** 2)
+        if any_rain:
+            draw = (rng.normal(0.0, 1.0, size=shape) * sigma[None, :]
+                    * wx.sigma_multiplier(current_compound))
+        else:
+            draw = rng.normal(0.0, sigma[None, :], size=shape)
+        noise = NOISE_AUTOCORR * noise + carry * draw
         lap_time = clean_pace + noise
         lap_time = lap_time + dirty_penalty
 
@@ -1515,18 +1837,90 @@ def run_simulation(pace, track, strategies, n_sims, seed=None,
         has_stops_left = stint_no < (my_n_stints - 1)
         planned_lap = my_pit_laps[rows, cols, stint_no]
 
+        # What a stop costs on this lap, with whatever flag is out right now.
+        # Moved above the decision because v2.0 has to price it: stopping under
+        # a safety car and stopping at green are not the same stop, and the
+        # difference is the whole of what makes an opportunistic stop worth
+        # taking.
+        cost = np.full(shape, track['pit_loss'])
+        cost = np.where(is_sc, cost * SC_PIT_DISCOUNT, cost)
+        cost = np.where(is_vsc, cost * VSC_PIT_DISCOUNT, cost)
+
         # A cheap stop stays available for the whole neutralization except its
         # final lap, which is where the field bunches. Letting a car take the
         # pit loss and the compression on the same lap has two mechanisms
         # rewriting the same gaps at once, and the order that comes out
         # depends on which ran first rather than on anything a driver did.
+        #
+        # v2.0 drops that last test, because neutral[:, lap + 1] is a lap that
+        # has not been run. See NEUTRAL_LAST_LAP_KNOWN.
         opportunistic = (has_stops_left
                          & (is_sc | is_vsc)
                          & (tyre_age >= MIN_STINT_BEFORE_PIT)
-                         & (lap + 1 >= planned_lap - PIT_WINDOW_TOLERANCE)
-                         & ~neutral_ends_this_lap[:, None])
+                         & (lap + 1 >= planned_lap - PIT_WINDOW_TOLERANCE))
+        if NEUTRAL_LAST_LAP_KNOWN or not REACTIVE_PIT_V2:
+            opportunistic = opportunistic & ~neutral_ends_this_lap[:, None]
 
-        if REACTIVE_PIT:
+        if REACTIVE_PIT_V2:
+            # --- v2.0: compare the candidates ----------------------------
+            # Priority runs top down. Race control has already spoken on a red
+            # flag lap; the cap is a hard constraint applied below; a cheap
+            # stop under a flag that is already out is taken. What is left is
+            # the normal-conditions question, and only that reaches v2.0, so
+            # one lap produces one decision and one reason.
+            due = has_stops_left & (lap + 1 >= planned_lap + PIT_DECISION_BAND)
+            reactive = np.zeros(shape, dtype=bool)
+
+            in_band = (has_stops_left
+                       & (tyre_age >= MIN_STINT_BEFORE_PIT)
+                       & (lap + 1 >= planned_lap - PIT_DECISION_BAND)
+                       & (lap + 1 <= planned_lap + PIT_DECISION_BAND)
+                       & ~retired
+                       & ~due
+                       & ~opportunistic)
+            if RED_FLAG_ENABLED:
+                in_band = in_band & ~rf_lap_now[:, None]
+
+            sel = np.flatnonzero(in_band.ravel())
+            if sel.size:
+                sel_sim, sel_drv = sel // n_drivers, sel % n_drivers
+
+                # position of each driver, which is the inverse of `order`
+                pos_of = np.empty(shape, dtype=np.int64)
+                np.put_along_axis(pos_of, order, ranks0, axis=1)
+
+                nxt = np.minimum(stint_no + 1, max_stints - 1)
+                # the lap before the next planned stop, or the flag. Every
+                # candidate is priced to this same lap - comparing a three-lap
+                # window against a seven-lap one is not a comparison.
+                horizon = np.minimum(my_pit_laps[rows, cols, nxt] - 1, n_laps)
+
+                answer = v2.decide(v2_ctx, lap, {
+                    'sim': sel_sim, 'drv': sel_drv,
+                    'total': total, 'pace': clean_pace, 'retired': retired,
+                    'order': order, 'pos': pos_of,
+                    'age': tyre_age, 'c_old': current_compound,
+                    'c_new': my_compounds[rows, cols, nxt],
+                    'planned': planned_lap, 'horizon': horizon,
+                    'pit_cost_now': cost, 'team_shift': team_shift,
+                    'stops': n_stops, 'last_pit': last_pit_lap,
+                    'names': driver_names,
+                }, log_sim=V2_LOG_SIM)
+
+                flat = reactive.ravel()
+                flat[sel] = answer['pit_now']
+                reactive = flat.reshape(shape)
+
+                v2_calls.ravel()[sel] += 1
+                v2_moved.ravel()[sel] += (answer['chosen_lap']
+                                          - answer['planned_lap'])
+                v2_reasons += np.bincount(answer['reason'],
+                                          minlength=len(v2.REASON_NAMES))
+                v2_intents += np.bincount(answer['intent'],
+                                          minlength=len(v2.INTENT_NAMES))
+                np.add.at(v2_infeasible, sel_sim[~answer['valid']], 1)
+                v2_log.extend(answer['log'])
+        elif REACTIVE_PIT:
             # The plan no longer forces the stop on its own lap; it sets the
             # centre of a band, and inside that band the tyre decides. `due`
             # survives only as the far edge, so a car cannot run to the flag
@@ -1579,7 +1973,91 @@ def run_simulation(pace, track, strategies, n_sims, seed=None,
             due = has_stops_left & (lap + 1 >= planned_lap)
             reactive = np.zeros(shape, dtype=bool)
 
-        pitting = due | opportunistic | reactive
+        # --- the weather decision (v2.1) ------------------------------
+        # Not bound to the dry pit window. A tyre that no longer suits the
+        # track is wrong on every lap, not only on the ones near a planned
+        # stop, and holding the change until the window opened would be
+        # modelling the model rather than the race.
+        weather_switch = np.zeros(shape, dtype=bool)
+        wx_target = fitted
+        if any_rain:
+            ideal = wx.best_category(w_lap, my_compounds[rows, cols, stint_no])
+            want = ((ideal != fitted) & ~retired & (lap < n_laps - 1)
+                    & (tyre_age >= WEATHER_MIN_STINT))
+            if RED_FLAG_ENABLED:
+                want = want & ~rf_lap_now[:, None]
+            if not WEATHER_MAY_BREAK_PLAN:
+                want = want & wx.is_wet_category(fitted)
+
+            sel = np.flatnonzero(want.ravel())
+            if sel.size:
+                ss, sd = sel // n_drivers, sel % n_drivers
+                pos_of = np.empty(shape, dtype=np.int64)
+                np.put_along_axis(pos_of, order, ranks0, axis=1)
+                pos = pos_of[ss, sd]
+                front = order[ss, np.maximum(pos - 1, 0)]
+                rear = order[ss, np.minimum(pos + 1, n_drivers - 1)]
+
+                t_self = total[ss, sd]
+                pace_self = clean_pace[ss, sd]
+                age_sel = tyre_age[ss, sd].astype(float)
+                fit_sel = fitted[ss, sd]
+                w_sel = wetness[ss, lap]
+                cost_now = cost[ss, sd]
+
+                # pace on a fresh set of the category being considered, with
+                # this lap's conditions stripped back out so the two are
+                # compared on the same footing
+                target_sel = wx.best_category(
+                    w_sel, my_compounds[ss, sd, stint_no[ss, sd]])
+                base = (pace_self - penalty_table[fit_sel, np.minimum(
+                    tyre_age[ss, sd], max_life)] - offsets[fit_sel]
+                    - POLE_TIME * (wx.condition_pct(w_sel)
+                                   + wx.mismatch_pct(fit_sel, w_sel)))
+                pace_fresh = base + offsets[target_sel] + POLE_TIME * (
+                    wx.condition_pct(w_sel)
+                    + wx.mismatch_pct(target_sel, w_sel))
+                exit_time = t_self + pace_self + cost_now
+
+                stay_tr, switch_tr = wx.traffic_terms(
+                    v2_ctx,
+                    t_self, pace_self, pace_fresh, exit_time,
+                    total[ss], clean_pace[ss], retired[ss], front, rear,
+                    (pos > 0) & ~retired[ss, front],
+                    (pos < n_drivers - 1) & ~retired[ss, rear],
+                    team_shift[sd], team_shift[rear], sd,
+                    np.maximum(pace_self, 1.0))
+
+                st = {'wetness': w_sel, 'rain': rain[ss, lap],
+                      'fitted': fit_sel, 'age': age_sel,
+                      'lap_time': POLE_TIME, 'pit_loss': cost_now,
+                      'laps_left': n_laps - lap - 1,
+                      'dry_choice': my_compounds[ss, sd, stint_no[ss, sd]],
+                      'cum': cum_loss,
+                      'exit_gap': True, 'stay_traffic': stay_tr,
+                      'switch_traffic': switch_tr}
+                go, tgt, why = wx.decide_switch(st)
+
+                weather_switch.ravel()[sel] = go
+                wx_target = wx_target.copy()
+                wx_target.ravel()[sel] = tgt
+                wx_reasons += np.bincount(why,
+                                          minlength=len(wx.SWITCH_REASONS))
+                if lap % 5 == 0:
+                    wx_horizon_agree.append(wx.horizon_agreement(st))
+                if WEATHER_LOG_SIM is not None:
+                    for r in np.flatnonzero(ss == WEATHER_LOG_SIM)[:4]:
+                        wx_log.append({
+                            'lap': lap + 1,
+                            'driver': str(driver_names[sd[r]]),
+                            'wetness': round(float(w_sel[r]), 2),
+                            'rain': wx.INTENSITY_NAMES[int(rain[ss[r], lap])],
+                            'fitted': wx.CATEGORY_NAMES[int(fit_sel[r])],
+                            'target': wx.CATEGORY_NAMES[int(tgt[r])],
+                            'action': wx.SWITCH_REASONS[int(why[r])],
+                            'changed': bool(go[r])})
+
+        pitting = due | opportunistic | reactive | weather_switch
 
         if ENFORCE_STINT_CAP:
             # Nobody has ever run this compound this long here, so neither
@@ -1608,13 +2086,25 @@ def run_simulation(pace, track, strategies, n_sims, seed=None,
 
         reactive_pits += (reactive & ~due & ~opportunistic).astype(np.int32)
 
-        cost = np.full(shape, track['pit_loss'])
-        cost = np.where(is_sc, cost * SC_PIT_DISCOUNT, cost)
-        cost = np.where(is_vsc, cost * VSC_PIT_DISCOUNT, cost)
         lap_time = lap_time + np.where(pitting, cost, 0.0)
 
         # --- retirements ---------------------------------------------------
-        if dnf_hazard > 0:
+        if TWO_CAUSE_DNF:
+            # Accidents are not drawn behind a safety car. There is no
+            # separate measurement of crash risk under yellow, and using the
+            # green-flag rate there would be an invention; this is the simple
+            # assumption rather than a claim that it cannot happen. Mechanical
+            # failures keep running, because an engine does not know what
+            # colour the flags are.
+            lam_acc = np.where(neutral_lap[:, None], 0.0,
+                               acc_rate[None, :] * np.ones(shape))
+            lam_mech = mech_rate[None, :] * mech_shape[lap] * np.ones(shape)
+            newly, cause_now = dnf_model.draw(rng, shape, lam_acc, lam_mech,
+                                              ~retired, DNF_SCALE)
+            retired = retired | newly
+            retired_lap = np.where(newly, lap, retired_lap)
+            dnf_cause = np.where(newly, cause_now, dnf_cause)
+        elif dnf_hazard > 0:
             newly = (~retired) & (rng.random(shape) < dnf_hazard)
             retired = retired | newly
             retired_lap = np.where(newly, lap, retired_lap)
@@ -1626,6 +2116,48 @@ def run_simulation(pace, track, strategies, n_sims, seed=None,
         total = total + np.where(retired, 0.0, lap_time)
         if dnf_hazard > 0:
             total = np.where(newly, 1e6 - retired_lap * 1e3, total)
+
+        # --- an accident reaches race control ------------------------------
+        # One request per simulation per lap, not one per car. Three cars out
+        # of the same incident is one safety car, and rolling for each of them
+        # would put the "does an accident bring out a flag" rate close to one
+        # by construction.
+        #
+        # The request goes to the schedule that already exists rather than
+        # starting a process of its own. Where a neutralization is already
+        # running the write can only raise the state, never add a second one,
+        # which is what np.maximum over the slice does.
+        if TWO_CAUSE_DNF and ACCIDENT_NEUTRALIZATION:
+            crashed = (cause_now == dnf_model.ACCIDENT).any(axis=1)
+            if crashed.any():
+                roll = rng.random(n_sims)
+                for sim in np.flatnonzero(crashed):
+                    pick = outcome_labels[int(np.searchsorted(outcome_cuts,
+                                                             roll[sim]))]
+                    if pick == 'none':
+                        continue
+                    start = lap + 1
+                    if start >= n_laps:
+                        continue
+                    if pick == 'RF':
+                        # the one-per-race limit is the existing model's and
+                        # is not quietly relaxed here
+                        if rf_used[sim] or not RED_FLAG_ENABLED:
+                            pick = 'SC'
+                        else:
+                            neutral[sim, start] = 3
+                            rf_used[sim] = True
+                            acc_neutral[sim] += 1
+                            continue
+                    code = 2 if pick == 'SC' else 1
+                    floor = MIN_SC_DURATION if code == 2 else MIN_VSC_DURATION
+                    mean = track['sc']['sc_duration' if code == 2
+                                       else 'vsc_duration']
+                    dur = max(floor, int(rng.poisson(max(mean, 1.0))))
+                    end = min(n_laps, start + dur)
+                    neutral[sim, start:end] = np.maximum(
+                        neutral[sim, start:end], code)
+                    acc_neutral[sim] += 1
 
         # --- the safety car closes the field up ----------------------------
         # On the last lap behind the safety car the queue has formed, and the
@@ -1728,8 +2260,17 @@ def run_simulation(pace, track, strategies, n_sims, seed=None,
                     # the team term follows the cars through the sweep
                     # without a second array to permute
                     shift = team_shift[order[:, p]]
-                    rolled = rng.random(n_sims) < pass_probability(
-                        advantage, pass_model, gap=gap, team_shift=shift)
+                    p_pass = pass_probability(advantage, pass_model,
+                                              gap=gap, team_shift=shift)
+                    if any_rain:
+                        # Fewer passes get completed in the wet. Measured with
+                        # opportunities in the denominator would be the right
+                        # way; there is not enough wet racing at any one
+                        # circuit for that, so this is one pooled scenario
+                        # number scaled by how wet it is.
+                        p_pass = p_pass * (1.0 - (1.0 - wx.WET_PASS_MULTIPLIER)
+                                           * wetness[:, lap])
+                    rolled = rng.random(n_sims) < p_pass
                     do_pass = do_pass | (attacking & rolled)
                     blocked = attacking & ~rolled
 
@@ -1757,7 +2298,20 @@ def run_simulation(pace, track, strategies, n_sims, seed=None,
         dirty_ord = np.zeros(shape)
         gaps = ord_total[:, 1:] - ord_total[:, :-1]
         severity = np.clip(1.0 - gaps / DIRTY_AIR_RANGE, 0.0, 1.0)
-        dirty_ord[:, 1:] = np.where(neutral_lap[:, None], 0.0, dirty_max * severity)
+        # Spray is not dirty air, but it does the same thing to the car behind
+        # and the model already has a term shaped like it. One multiplier,
+        # labelled a scenario, rather than a second mechanism doing the same
+        # job slightly differently.
+        this_dirty = dirty_max * (wx.WET_DIRTY_AIR_MULTIPLIER
+                                  if any_rain else 1.0)
+        if any_rain:
+            this_dirty = dirty_max * (1.0 + (wx.WET_DIRTY_AIR_MULTIPLIER - 1.0)
+                                      * w_lap)
+        dirty_ord[:, 1:] = np.where(neutral_lap[:, None], 0.0,
+                                    (this_dirty if np.isscalar(this_dirty)
+                                     else np.take_along_axis(
+                                         np.broadcast_to(this_dirty, shape),
+                                         order, axis=1)[:, 1:]) * severity)
 
         np.put_along_axis(total, order, ord_total, axis=1)
 
@@ -1837,10 +2391,41 @@ def run_simulation(pace, track, strategies, n_sims, seed=None,
         resets = pitting | refit
         advances = pitting | advance_plan
 
+        # when each car last changed tyres, which is the observable half of an
+        # overcut: staying out is only an overcut against a rival that has
+        # already stopped, and that is a thing the pit wall can see
+        last_pit_lap = np.where(resets, lap + 1, last_pit_lap)
+
         tyre_age = np.where(resets, 1, tyre_age + 1)
         stint_no = np.where(advances,
                             np.minimum(stint_no + 1, my_n_stints - 1), stint_no)
-        n_stops += resets.astype(np.int32)          # a free change is still a stop
+
+        # A planned stop fits the plan's next compound; a weather change fits
+        # the category the conditions called for. A free change under a red
+        # flag fits whatever suits the track that everyone can see, which is
+        # the one place the rules hand out a choice for nothing.
+        fitted = np.where(resets, my_compounds[rows, cols, stint_no], fitted)
+        if any_rain:
+            fitted = np.where(
+                refit, wx.best_category(w_lap, my_compounds[rows, cols,
+                                                            stint_no]), fitted)
+            fitted = np.where(weather_switch, wx_target, fitted)
+
+            # A planned stop that came due while the car was on inters is not
+            # owed later. The pointer walks past it so the plan resumes where
+            # the race actually is, rather than collecting debts.
+            on_wet = wx.is_wet_category(fitted)
+            elapsed = on_wet & (lap + 1 >= my_pit_laps[rows, cols, stint_no])
+            stint_no = np.where(elapsed,
+                                np.minimum(stint_no + 1, my_n_stints - 1),
+                                stint_no)
+        fitted = fitted.astype(np.int32)
+        weather_stops += (weather_switch & ~retired).astype(np.int32)
+        n_stops += resets.astype(np.int32)          # every tyre change
+        # and the ones that cost a pit stop, which is the number a strategist
+        # means by "stops". A free change under a red flag is a different
+        # event and is reported as one.
+        pit_stops += (pitting & ~retired).astype(np.int32)
         sc_stops += (pitting & (is_sc | is_vsc)).astype(np.int32)
         rf_stops += refit.astype(np.int32)
 
@@ -1853,6 +2438,16 @@ def run_simulation(pace, track, strategies, n_sims, seed=None,
         'neutral': neutral,
         'n_stops': n_stops,
         'sc_stops': sc_stops,
+        'pit_stops': pit_stops,
+        'weather_stops': weather_stops,
+        'wet_laps': wet_laps,
+        'unraceable_laps': unraceable_laps,
+        'wx_reasons': wx_reasons,
+        'wx_horizon_agree': wx_horizon_agree,
+        'wx_log': wx_log,
+        'wetness': wetness,
+        'rain': rain,
+        'any_rain': any_rain,
         'strat_weights': strat_weights,
         'plans': plans,
         'overtakes': overtakes,
@@ -1862,6 +2457,10 @@ def run_simulation(pace, track, strategies, n_sims, seed=None,
         'laps_stuck': laps_stuck,
         'retired': retired,
         'retired_lap': retired_lap,
+        'dnf_cause': dnf_cause,
+        'dnf_sources': dnf_sources,
+        'acc_neutral': acc_neutral,
+        'bg_neutral': bg_neutral,
         'trace_order': trace_order,
         'trace_pits': trace_pits,
         'trace_laptime': trace_laptime,
@@ -1872,6 +2471,13 @@ def run_simulation(pace, track, strategies, n_sims, seed=None,
         'tyre_loss': tyre_loss_sum,
         'reactive_pits': reactive_pits,
         'forced_pits': forced_pits,
+        'v2_calls': v2_calls,
+        'v2_moved': v2_moved,
+        'v2_reasons': v2_reasons,
+        'v2_intents': v2_intents,
+        'v2_infeasible': v2_infeasible,
+        'v2_log': v2_log,
+        'last_pit_lap': last_pit_lap,
         'longest_stint': longest_stint,
         'longest_overall': longest_overall,
         'cap_by_compound': cap_by_compound,
@@ -1966,6 +2572,196 @@ def rebuild_compounds(diag, sim):
     return out
 
 
+def dnf_summary(diag, n_sims, n_drivers):
+    """
+    Why cars stopped, and how much of the real thing that covers.
+
+    Finishing and the two causes add to one, because those are the only three
+    things the simulation can produce. The unexplained third of the historical
+    retirements is not a fourth slice of this pie - it is a statement about the
+    source data, carried alongside so that a 9% modelled retirement rate is
+    never mistaken for the 14% the results file actually contains.
+    """
+    if 'dnf_cause' not in diag or not TWO_CAUSE_DNF:
+        return None
+    out = dnf_model.summarise(diag, n_sims, n_drivers)
+    out['sources'] = diag.get('dnf_sources', {})
+    out['provenance'] = dnf_model.provenance()
+    out['scale'] = DNF_SCALE
+    out['linked'] = ACCIDENT_NEUTRALIZATION
+    return out
+
+
+def dnf_lines(diag):
+    """The two causes as console lines, or a note that the old rule ran."""
+    s = dnf_summary(diag, 0, 0)
+    if s is None:
+        return [f'retirements   flat {DNF_RATE_PER_RACE:.1%} per car, cause '
+                f'not modelled' + ('' if DNF_ENABLED else ' (off)')]
+
+    laps_a, laps_m = s['accident_laps'], s['mechanical_laps']
+    return [
+        f'retirements   two causes, measured per lap at risk over 2018-2025',
+        f'  finish      {s["p_finish"]:.1%}   accident {s["p_accident"]:.1%}   '
+        f'mechanical {s["p_mechanical"]:.1%}   (these three are the whole of it)',
+        f'  risk from   driver: {s["sources"].get("accident", "?")}',
+        f'              team:   {s["sources"].get("mechanical", "?")}',
+        f'  timing      ' + ('bell, peak at '
+                             f'{dnf_model.BELL_PEAK:.0%}'
+                             if s['bell_supported'] else
+                             'flat - the proposed bell lost to flat on AIC'),
+        f'  event lap   accident median '
+        + (f'{np.median(laps_a):.0f}' if len(laps_a) else '-')
+        + f', mechanical median '
+        + (f'{np.median(laps_m):.0f}' if len(laps_m) else '-')
+        + f' of {diag["neutral"].shape[1]}',
+        f'  flags       {s["accident_neutralizations"]:.2f} per race from '
+        f'accidents, {s["background_neutralizations"]:.2f} background'
+        + ('' if s['linked'] else ' (accident link off)'),
+        f'  after a crash ' + '  '.join(f'{k} {v:.0%}'
+                                        for k, v in s['outcome_mix'].items()),
+        f'  coverage    the two causes explain {s["coverage"]:.0%} of real '
+        f'retirements; the rest say only "Retired" and are not redistributed',
+    ]
+
+
+def weather_summary(diag):
+    """
+    What the weather did, and which parts of it were ever measured.
+
+    The provenance table is not decoration. Half of this model is measured over
+    thousands of laps and half of it is a scenario pinned to two thin anchors,
+    and a reader who cannot tell which is which will believe the wrong half.
+    """
+    if not diag.get('any_rain'):
+        return None
+
+    wetness = diag['wetness']
+    rain = diag['rain']
+    reasons = diag['wx_reasons']
+    calls = int(reasons.sum())
+    agree = diag['wx_horizon_agree']
+    n_sims, n_laps = wetness.shape
+
+    return {
+        'scenario': WEATHER_SCENARIO,
+        'description': wx.SCENARIOS[WEATHER_SCENARIO],
+        'races_with_rain': float((rain > 0).any(axis=1).mean()),
+        'wet_lap_share': float((wetness > 0).mean()),
+        'peak_wetness': float(wetness.max(axis=1).mean()),
+        'mean_wetness': float(wetness.mean()),
+        'weather_stops': float(diag['weather_stops'].mean()),
+        'pit_stops': float(diag['pit_stops'].mean()),
+        'rf_changes': float(diag['rf_stops'].mean()),
+        'forced_cap': float(diag['forced_pits'].mean()),
+        'laps_on_wet': float(diag['wet_laps'].mean()),
+        'unraceable_laps': float(diag['unraceable_laps'].mean()),
+        'calls': calls,
+        'reasons': {name: int(reasons[i])
+                    for i, name in enumerate(wx.SWITCH_REASONS)},
+        'horizon_agreement': float(np.mean(agree)) if agree else float('nan'),
+        'provenance': wx.provenance(),
+        'log': diag['wx_log'],
+        'track': wetness.mean(axis=0),      # the average race, lap by lap
+    }
+
+
+def weather_lines(diag):
+    """The weather as console lines, or a note saying it stayed dry."""
+    s = weather_summary(diag)
+    if s is None:
+        return ['weather       dry' + ('' if WEATHER_ENABLED else ' (off)')]
+
+    r = s['reasons']
+    return [
+        f'weather       scenario "{s["scenario"]}" - {s["description"]}',
+        f'  rain        {s["races_with_rain"]:.0%} of races, '
+        f'{s["wet_lap_share"]:.0%} of laps wet, peak index '
+        f'{s["peak_wetness"]:.2f} (1.00 = very wet on this scale)',
+        f'  wet tyres   {s["laps_on_wet"]:.1f} laps per driver on a wet '
+        f'category, {s["unraceable_laps"]:.2f} laps on a tyre past racing',
+        f'  stops       {s["pit_stops"]:.2f} pit-lane per driver, of which '
+        f'{s["weather_stops"]:.2f} for weather; {s["rf_changes"]:.2f} free '
+        f'under a red flag, {s["forced_cap"]:.2f} forced by a cap',
+        f'  decisions   {s["calls"]:,} asked - '
+        f'changed {r["weather_switch"] / max(s["calls"], 1):.0%}, '
+        f'waited {r["wait one lap"] / max(s["calls"], 1):.0%}, '
+        f'forced off an unraceable tyre '
+        f'{r["current tyre unraceable"] / max(s["calls"], 1):.0%}',
+        f'  horizon     5/10/15-lap windows agree on '
+        f'{s["horizon_agreement"]:.0%} of calls',
+        f'  measured    inter +13.5%/lap over 3,167 laps, wet +25.2% over '
+        f'237; spread 3.1x and 4.5x dry; SC 2.24x per lap',
+        f'  scenario    the crossover shape, the wetness scale, the wetting '
+        f'and drying rates, wet wear and the wet stint caps',
+    ]
+
+
+def v2_summary(diag):
+    """
+    What the v2.0 decision layer actually did, as counts rather than prose.
+
+    Every number here is a share of decisions, not of stops. A car sits in its
+    window for up to eleven laps and answers the question on each of them, so
+    the counts are much larger than the number of stops - and that is the
+    right denominator for "how often did traffic change the answer".
+    """
+    calls = int(diag['v2_calls'].sum())
+    if calls == 0:
+        return None
+
+    reasons = diag['v2_reasons']
+    intents = diag['v2_intents']
+    n_sims = diag['v2_calls'].shape[0]
+    return {
+        'calls': calls,
+        'per_driver': float(diag['v2_calls'].mean()),
+        'mean_shift': float(diag['v2_moved'].sum()) / calls,
+        'reasons': {name: int(reasons[i])
+                    for i, name in enumerate(v2.REASON_NAMES)},
+        'intents': {name: int(intents[i])
+                    for i, name in enumerate(v2.INTENT_NAMES)},
+        'traffic_share': float(reasons[v2.TRAFFIC_EARLY]
+                               + reasons[v2.TRAFFIC_LATE]) / calls,
+        'on_plan_share': float(reasons[v2.ON_PLAN]) / calls,
+        'infeasible': float(diag['v2_infeasible'].sum()) / max(n_sims, 1),
+        'forced_cap_stop': float(diag['forced_pits'].mean()),
+        'free_rf_change': float(diag['rf_stops'].mean()),
+        'log': diag['v2_log'],
+    }
+
+
+def v2_lines(diag):
+    """The same summary as console lines, or a note saying the layer was off."""
+    s = v2_summary(diag)
+    if s is None:
+        return ['v2.0 decision off']
+
+    r = s['reasons']
+    return [
+        f'v2.0 calls    {s["calls"]:,} decisions, {s["per_driver"]:.1f} per '
+        f'driver, mean shift {s["mean_shift"]:+.2f} laps',
+        f'v2.0 chose    on plan {s["on_plan_share"]:.0%}, '
+        f'earlier {(r["tyre, earlier"] + r["traffic, earlier"]) / s["calls"]:.0%}, '
+        f'later {(r["tyre, later"] + r["traffic, later"]) / s["calls"]:.0%}',
+        f'v2.0 driver   traffic moved the answer on {s["traffic_share"]:.0%} '
+        f'of calls, the tyre alone on the rest',
+        f'v2.0 intent   undercut {s["intents"]["undercut"] / s["calls"]:.0%}, '
+        f'overcut {s["intents"]["overcut"] / s["calls"]:.0%} '
+        f'(what the car was trying, not whether it worked)',
+        f'forced stops  {s["forced_cap_stop"]:.3f} per driver by the compound '
+        f'cap, {s["free_rf_change"]:.3f} free changes under a red flag - '
+        f'neither is a v2.0 choice',
+        f'no candidate  {s["infeasible"]:.2f} times per race the plan had no '
+        f'legal pit lap left and the cap rule took over',
+        f'v2.0 traffic  <= {v2.MAX_RIVALS} rivals, expected values only, over '
+        f'{PIT_DECISION_BAND * 2 + 1 + V2_TRAFFIC_LAPS} laps shared by every '
+        f'candidate',
+        f'v2.0 blind to rival plans, future laps and the SC schedule; '
+        f'track position is not modelled, so lapped traffic is under-counted',
+    ]
+
+
 def build_param_lines(pace, track, strategies, diag, positions, total):
     """Every setting the run used, for the diagnostics panel."""
     sc = track['sc']
@@ -1975,7 +2771,8 @@ def build_param_lines(pace, track, strategies, diag, positions, total):
 
     lines = [
         f'target        {TARGET_EVENT} {SEASON}, {track["n_laps"]} laps',
-        f'sims          {N_SIMS:,}   seed {RANDOM_SEED}',
+        f'sims          {N_SIMS:,}   seed {RANDOM_SEED}   '
+        f'parameters {PARAM_SET_VERSION}',
         f'pole          {POLE_DRIVER} {POLE_TIME:.3f} s',
         f'drivers       {len(pace)}',
         f'grid source   {pace.attrs.get("grid_source", "?")}',
@@ -2042,10 +2839,19 @@ def build_param_lines(pace, track, strategies, diag, positions, total):
         f'{STRATEGY_TEMPERATURE:.1f}'
         f'{", recosted from the tyre curve" if RECOST_STRATEGIES else ""}',
         f'pit rule      '
-        + (f'reactive, planned lap +/- {PIT_DECISION_BAND}'
-           if REACTIVE_PIT else 'fixed at the planned lap'),
+        + ('v2.0, candidates priced against rivals and exit traffic'
+           if REACTIVE_PIT_V2 else
+           (f'v1.1 reactive, planned lap +/- {PIT_DECISION_BAND}'
+            if REACTIVE_PIT else 'fixed at the planned lap')),
         f'reactive pits {diag["reactive_pits"].mean():.2f} per driver, '
         f'{diag["forced_pits"].mean():.2f} forced by the cap',
+    ]
+
+    lines += v2_lines(diag)
+    lines += weather_lines(diag)
+    lines += dnf_lines(diag)
+
+    lines += [
         '',
         f'races with SC {(neutral == 2).any(axis=1).mean():.1%}   '
         f'VSC {(neutral == 1).any(axis=1).mean():.1%}',
@@ -2077,7 +2883,13 @@ RUNTIME_FLAGS = {
     'RECOST_STRATEGIES': 'Re-price the strategy menu on this circuit\'s own '
                          'curves before offering it.',
     'REACTIVE_PIT': 'Let a car pit early or late as its tyre actually goes '
-                    'off. Off, it stops on the planned lap.',
+                    'off. Off, it stops on the planned lap. Ignored while the '
+                    'v2.0 decision is on, which supersedes it.',
+    'REACTIVE_PIT_V2': 'Choose the pit lap by pricing every candidate against '
+                       'rivals and pit-exit traffic, not only the tyre.',
+    'NEUTRAL_LAST_LAP_KNOWN': 'Let the decision see which lap a safety car '
+                              'ends on. It cannot really; this is here to '
+                              'reproduce the v1.1 rule that assumed it could.',
     'PER_DRIVER_STRATEGY': 'Cost the strategy menu per driver. The v1.2 tyre '
                            'model has no driver term, so this does nothing yet.',
     'NEUTRAL_FREEZES_GAPS': 'Hold time gaps while the race is neutralised.',
@@ -2086,7 +2898,14 @@ RUNTIME_FLAGS = {
                         'restart in running order.',
     'LOCK_START_ORDER': 'Keep the grid order through lap one instead of '
                         'racing the start.',
-    'DNF_ENABLED': 'Let cars retire.',
+    'DNF_ENABLED': 'Let cars retire. Superseded by the two-cause model, '
+                   'which decides why as well as whether.',
+    'TWO_CAUSE_DNF': 'Split retirements into accidents and mechanical '
+                     'failures, with per-driver and per-team risk measured '
+                     'per lap at risk.',
+    'ACCIDENT_NEUTRALIZATION': 'Let an accident bring out a flag, with the '
+                               'background rate scaled down so the two are '
+                               'not counted twice.',
     'EVOLUTION_ENABLED': 'Let the track surface rubber in across the race.',
     'AFFINITY_ENABLED': 'Shift pace by how well this circuit suits each car.',
     'AFFINITY_TEAM_2026': 'Take the team half of affinity from 2026 alone '
@@ -2095,7 +2914,21 @@ RUNTIME_FLAGS = {
                          'not only by its pace advantage.',
     'TEAM_PASS_ENABLED': 'Let a team\'s measured overtaking strength (PC1) '
                          'move its pass odds.',
-    'IS_WET': 'Run the race wet.',
+    'IS_WET': 'Raise the safety-car rate for a wet race. Superseded by the '
+              'v2.1 weather model, which changes the race itself.',
+    'WEATHER_ENABLED': 'Let it rain: a track that wets and dries with a lag, '
+                       'intermediate and wet tyres, and a decision to change '
+                       'between them.',
+    'WEATHER_MAY_BREAK_PLAN': 'Allow a weather change to depart from the dry '
+                              'plan. Off, only a car already on a wet tyre '
+                              'may change back.',
+}
+
+# Settings that pick from a list rather than a switch. Kept apart from
+# RUNTIME_FLAGS because a scenario is not a behaviour being turned on, it is
+# an assumption being chosen, and the interface has to say so.
+RUNTIME_CHOICES = {
+    'WEATHER_SCENARIO': tuple(wx.SCENARIOS),
 }
 
 # A flag named here but missing from the module would only surface when
@@ -2123,7 +2956,8 @@ def flag_overrides(overrides):
         return
 
     module = sys.modules[__name__]
-    unknown = [k for k in overrides if k not in RUNTIME_FLAGS]
+    unknown = [k for k in overrides
+               if k not in RUNTIME_FLAGS and k not in RUNTIME_CHOICES]
     if unknown:
         raise KeyError(f'not runtime flags: {", ".join(sorted(unknown))}')
 
@@ -2183,8 +3017,13 @@ def source_badges(pace, track):
          f'{track["pass_rate"]:.3f}/lap', None),
         ('Neutralisation', track.get('sc_source', '?'),
          f'SC {track["sc"]["sc_lambda"]:.2f}/race', None),
-        ('Degradation', track.get('deg_source', '?'),
-         f'{track["deg"]:.3f} s/lap', None),
+        # The Pirelli rating chain in track_deg.py ends here, and here is
+        # where it stops: nothing in the lap loop reads it. The v1.2 curves
+        # took degradation over. Shown because it is still computed, labelled
+        # because a panel that implies a number matters when it does not is
+        # worse than no panel.
+        ('Degradation (display only)', track.get('deg_source', '?'),
+         f'{track["deg"]:.3f} s/lap, not read by the engine', 'derived'),
         ('Compound offsets', track.get('offset_source', '?'),
          ', '.join(f'{c[0]}{track["offsets"][c]:+.2f}' for c in COMPOUND_NAMES),
          None),
@@ -2207,10 +3046,53 @@ def source_badges(pace, track):
         ('Dirty air', 'chosen, never measured',
          f'{track["dirty_air_penalty"]:.2f} s/lap over {DIRTY_AIR_RANGE:.1f} s',
          'hand-set'),
-        ('DNF rate', 'chosen, never measured',
-         f'{DNF_RATE_PER_RACE:.0%} per car', 'hand-set'),
+        ('Retirements',
+         'measured per lap at risk, 2018-2025' if TWO_CAUSE_DNF
+         else 'chosen, never measured',
+         'accident and mechanical, split by cause' if TWO_CAUSE_DNF
+         else f'{DNF_RATE_PER_RACE:.0%} per car',
+         'measured' if TWO_CAUSE_DNF else 'hand-set'),
+        ('Accident brings a flag',
+         '123 deduplicated incidents' if TWO_CAUSE_DNF else 'not modelled',
+         '49.6%, against the 90% assumed' if TWO_CAUSE_DNF else '',
+         'measured' if TWO_CAUSE_DNF else 'hand-set'),
+        ('Retirement cause coverage',
+         'a third of real retirements say only "Retired"',
+         f'{dnf_model.CAUSE_COVERAGE:.0%} of them classified', 'measured'),
         ('Pit loss', track.get('pit_source', 'measured'),
          f'{track["pit_loss"]:.1f} s', None),
+        ('Parameter set', f'{PARAM_SET_VERSION}, see parameters.py',
+         f'{len(PARAM_SET_CHANGED)} constants changed from v2.2', 'derived'),
+        ('Safety car timing', '146 background starts, accident-linked removed',
+         f'mean {SC_TIMING_MEAN_FRACTION:.0%}, sd '
+         f'{SC_TIMING_STD_FRACTION:.0%} of distance', 'measured'),
+        ('Safety car pooling', 'chosen on 48 held-out races',
+         f'{SC_SHRINK_RACES:.0f} pseudo-races', 'measured'),
+        ('Lap noise persistence',
+         'hand-set; measured lap-to-lap persistence is 0.155',
+         f'{NOISE_AUTOCORR:.2f} - the largest open assumption', 'hand-set'),
+        ('Pit timing',
+         'v2.0, candidates priced against rivals and exit traffic'
+         if REACTIVE_PIT_V2 else
+         ('v1.1, marginal tyre cost only' if REACTIVE_PIT
+          else 'fixed at the planned lap'),
+         f'+/- {PIT_DECISION_BAND} laps', 'derived'),
+        ('Traffic horizon', 'chosen, never measured',
+         f'{V2_TRAFFIC_LAPS} laps past the last candidate', 'hand-set'),
+        # The weather is the one input with no probability attached to it.
+        # Every wet result is conditional on a scenario somebody picked, and
+        # that has to be visible next to the result rather than one tab away.
+        ('Weather',
+         f'scenario "{WEATHER_SCENARIO}", chosen not forecast'
+         if WEATHER_ENABLED else 'off - the race is dry',
+         wx.SCENARIOS[WEATHER_SCENARIO] if WEATHER_ENABLED else '',
+         'hand-set' if WEATHER_ENABLED else 'measured'),
+        ('Wet pace', 'against each race\'s own dry median, 2018-2025',
+         '+13.5% inter over 3,167 laps, +25.2% wet over 237', 'measured'),
+        ('Wet crossover', '32 lap-instants over 11 races - not a curve',
+         'scenario between measured anchors', 'hand-set'),
+        ('Wet neutralisation', '23 events / 567 wet laps vs 176 / 9,740 dry',
+         f'{wx.NEUTRAL_WET_RATIO:.2f}x per lap', 'measured'),
     ]
 
     for compound in COMPOUND_NAMES:
@@ -2278,6 +3160,12 @@ def run(overrides=None, progress_callback=None):
             'event': TARGET_EVENT, 'season': SEASON, 'n_sims': N_SIMS,
             'seed': RANDOM_SEED, 'n_laps': track['n_laps'],
             'flags': {k: globals()[k] for k in RUNTIME_FLAGS},
+            'choices': {k: globals()[k] for k in RUNTIME_CHOICES},
+            'v2': v2_summary(diag),
+            'weather': weather_summary(diag),
+            'dnf': dnf_summary(diag, N_SIMS, len(pace)),
+            'dnf_by_driver': (dnf_model.per_driver(diag, pace['Driver'])
+                              if TWO_CAUSE_DNF else None),
         }
 
 
@@ -2300,7 +3188,7 @@ def position_distribution(positions, drivers):
 
 
 def main():
-    """The console run: run() for the work, then everything it refuses to do."""
+    """T    he console run: run() for the work, then everything it refuses to do."""
     os.makedirs(OUT_DIR, exist_ok=True)
 
     result = run()

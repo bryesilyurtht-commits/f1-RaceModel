@@ -3497,7 +3497,7 @@ def main():
     print('average of 3.14 positions from where it started. A model that moves')
     print('nobody, or one that scrambles the field, would both miss that.')
     print('Whether this model predicts better than the grid is not measured')
-    print('here and is not yet measured anywhere - see BACKTEST.md.')
+    print('here and is not yet measured anywhere - see docs/BACKTEST.md.')
 
     csv_path = os.path.join(OUT_DIR, 'predictions.csv')
     df.to_csv(csv_path, index=False)

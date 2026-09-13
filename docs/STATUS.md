@@ -48,7 +48,7 @@ visible rather than patched with a hand-set front-row protection.
 - **No licence.** The repository has none, which is a decision for its author
   rather than something to be chosen on their behalf. Until one exists the
   default applies: no permissions are granted to anyone else.
-- **No screenshot.** `README.md` describes the interface without showing it.
+- **No screenshot.** `../README.md` describes the interface without showing it.
 - **Not published.** Everything here is committed locally. Nothing has been
   pushed, and the remote still holds v1.6.
 

@@ -6,7 +6,7 @@ rather than arithmetic, which is the point: this version's failure mode is a
 number that changed in the code and not in the panel, or a set that means two
 different things on two days.
 
-    python -m Simülasyon.test_parameters
+    python -m Simülasyon.tests.test_parameters
 """
 
 import hashlib
@@ -276,7 +276,7 @@ def test_the_open_assumption_is_named_as_one():
 # --- 6. the model still works ----------------------------------------------
 
 def test_the_soft_knee_preserves_the_order():
-    from Simülasyon.clean import compress_delta
+    from Simülasyon.data_prep.clean import compress_delta
     raw = np.array([0.0, 0.4, 0.9, 1.0, 1.4, 2.2, 3.1, 4.2])
     out = compress_delta(raw)
     assert (np.diff(out) > 0).all(), 'compression reordered the field'

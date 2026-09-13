@@ -18,7 +18,7 @@ pass probability ignored the gap and fed only dirty air; the moment the gap
 started pricing a lap it became a +1.02 logit bonus handed out every lap to
 every stuck car.
 
-Run:  python -m Simülasyon.test_pass_model
+Run:  python -m Simülasyon.tests.test_pass_model
 """
 
 import os
@@ -28,7 +28,8 @@ import unittest
 import numpy as np
 
 if __package__ in (None, ''):
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    sys.path.insert(0, os.path.dirname(os.path.dirname(
+        os.path.dirname(os.path.abspath(__file__)))))
 
 from Simülasyon import simulate as S
 from Simülasyon.tracks import ATTACK_GAP, HELD_GAP, MIN_GAP
@@ -203,7 +204,7 @@ class TestTeamTerm(unittest.TestCase):
         import pandas as pd
         path = os.path.join(S.DATA_DIR, f'overtake_team_profile_{S.SEASON}.csv')
         if not os.path.exists(path):
-            self.skipTest('run python -m Simülasyon.overtake_speed first')
+            self.skipTest('run python -m Simülasyon.data_prep.overtake_speed first')
         pace = S.read_csv(f'driver_pace_{S.SEASON}.csv')
         shift, source = S.team_pass_shift(pace)
         self.assertEqual(len(shift), len(pace))
@@ -227,7 +228,7 @@ class TestCalibration(unittest.TestCase):
             self.skipTest('overtaking.csv missing')
         df = pd.read_csv(path)
         if 'pass_rate_near' not in df.columns:
-            self.skipTest('run python -m Simülasyon.overtaking first')
+            self.skipTest('run python -m Simülasyon.data_prep.overtaking first')
         d = df.dropna(subset=['pass_rate_near', 'pass_rate'])
         share = (d['pass_rate_near'] >= d['pass_rate']).mean()
         self.assertGreater(share, 0.8,

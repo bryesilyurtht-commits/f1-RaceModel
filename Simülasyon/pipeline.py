@@ -71,39 +71,39 @@ HASH_BYTES = 1 << 20
 #
 # The order of this list is the order the steps run in.
 STEPS = [
-    dict(name='season laps', module='fetch.py', network=True,
+    dict(name='season laps', module='data_prep/fetch.py', network=True,
          needs=[], required=True,
          produces=['f1_2026_laps.csv', 'f1_2026_grid.csv',
                    'f1_2026_poles.csv', 'f1_2026_quali.csv',
                    'f1_2026_results.csv'],
          note='downloads the season and withholds the target race'),
 
-    dict(name='historical laps', module='dataset.py', network=True,
+    dict(name='historical laps', module='data_prep/dataset.py', network=True,
          needs=[], required=False,
          produces=['laps_2018_2025.csv', 'results_2018_2025.csv'],
          note='2018-2025, only rebuilt on request - it is a long download'),
 
-    dict(name='driver pace', module='clean.py', network=False,
+    dict(name='driver pace', module='data_prep/clean.py', network=False,
          needs=['f1_2026_laps.csv', 'f1_2026_poles.csv'], required=True,
          produces=['f1_2026_laps_clean.csv', 'driver_pace_2026.csv'],
          note='delta to pole and lap-to-lap sigma'),
 
-    dict(name='team affinity', module='team_affinity.py', network=False,
+    dict(name='team affinity', module='data_prep/team_affinity.py', network=False,
          needs=['f1_2026_results.csv', 'f1_2026_quali.csv'], required=False,
          produces=['team_affinity_2026.csv'],
          note='which 2026 circuits suit which 2026 team'),
 
-    dict(name='overtaking', module='overtaking.py', network=False,
+    dict(name='overtaking', module='data_prep/overtaking.py', network=False,
          needs=['laps_2018_2025.csv'], required=False,
          produces=['overtaking.csv'],
          note='pass rates per circuit'),
 
-    dict(name='neutralization', module='neutralization.py', network=False,
+    dict(name='neutralization', module='data_prep/neutralization.py', network=False,
          needs=['laps_2018_2025.csv'], required=False,
          produces=['neutralization.csv'],
          note='safety car and red flag rates'),
 
-    dict(name='pit analysis', module='pit_analysis.py', network=False,
+    dict(name='pit analysis', module='data_prep/pit_analysis.py', network=False,
          needs=['laps_2018_2025.csv'], required=True,
          produces=['pit_summary.csv', 'pit_strategies.csv'],
          note='pit loss and the strategy menu'),
@@ -113,14 +113,14 @@ STEPS = [
          produces=['tyre_curve_params.json'],
          note='degradation per compound per circuit'),
 
-    dict(name='retirement risk', module='retirements.py', network=False,
+    dict(name='retirement risk', module='data_prep/retirements.py', network=False,
          needs=['results_2018_2025.csv', 'laps_2018_2025.csv'],
          required=False,
          produces=['dnf_driver_risk.csv', 'dnf_team_risk.csv',
                    'dnf_profile.csv'],
          note='accident and mechanical rates per lap at risk'),
 
-    dict(name='wet profiles', module='wet_conditions.py', network=False,
+    dict(name='wet profiles', module='data_prep/wet_conditions.py', network=False,
          needs=['laps_2018_2025.csv'], required=False,
          produces=['wet_profiles.csv'],
          note='what the lap data says about running in the rain'),

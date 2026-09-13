@@ -3,7 +3,7 @@ Acceptance tests for the v2.2 two-cause retirement model.
 
 Every test is one of the checks the v2.2 roadmap requires.
 
-    python -m Simülasyon.test_dnf
+    python -m Simülasyon.tests.test_dnf
 """
 
 import hashlib
@@ -11,7 +11,7 @@ import hashlib
 import numpy as np
 
 from Simülasyon import dnf as dnf_model
-from Simülasyon import retirements as rt
+from Simülasyon.data_prep import retirements as rt
 from Simülasyon import simulate as s
 
 

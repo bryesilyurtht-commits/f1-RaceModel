@@ -150,31 +150,37 @@ corrected in either direction; it is the largest open assumption in the model.
 
 ```
 app.py                      the interface
-Simülasyon/
+Simülasyon/                 the model, and the one entry point to it
+  pipeline.py               what data exists, what is stale, and run the race
+  target_race.py            which Grand Prix is being predicted
   simulate.py               the race model, and run() for the interface
   reactive_strategy.py      when to pit, priced against rivals and traffic
   starts.py                 the start and lap one, measured
-  backtest.py               scoring a prediction against what happened
   weather.py                rain, a drying track, and the tyre that suits it
-  wet_conditions.py         what the lap data can and cannot say about rain
   dnf.py                    accidents, failures, and the flags they bring out
-  retirements.py            causes, exposure and timing, measured
+  tracks.py                 per-circuit constants
+  fuel_effect.py            what a lighter car is worth per lap
   parameters.py             every constant, its kind, and what it is worth
   calibrate.py              measuring the ones that were only ever chosen
-  pipeline.py               what data exists, what is stale, and run the race
-  profile_run.py            where the time and the memory actually go
-  target_race.py            which Grand Prix is being predicted
-  fetch.py                  downloads the season, withholds the target race
-  clean.py                  driver pace and lap-time sigma
-  dataset.py                the 2018-2025 lap cache
-  overtaking.py             pass rates, per circuit
-  overtake_speed.py         per-team overtaking and straight-line speed
-  team_affinity.py          which 2026 circuits suit which 2026 team
-  track_features.py         circuit character from telemetry
-  track_affinity.py         the 2022-25 record, per driver and team
-  neutralization.py         safety car and red flag rates
-  pit_analysis.py           pit loss and strategy costs
+  backtest.py               scoring a prediction against what happened
+  backtest_inputs.py        rebuilding what a past race could have known
   diagnostics.py            the per-lap report
+  profile_run.py            where the time and the memory actually go
+  data_prep/                everything that writes into data/
+    fetch.py                downloads the season, withholds the target race
+    dataset.py              the 2018-2025 lap cache
+    clean.py                driver pace and lap-time sigma
+    pit_analysis.py         pit loss and strategy costs
+    overtaking.py           pass rates, per circuit
+    overtake_speed.py       per-team overtaking and straight-line speed
+    neutralization.py       safety car and red flag rates
+    retirements.py          causes, exposure and timing, measured
+    wet_conditions.py       what the lap data can and cannot say about rain
+    team_affinity.py        which 2026 circuits suit which 2026 team
+    track_features.py       circuit character from telemetry
+    track_affinity.py       the 2022-25 record, per driver and team
+    quali_history.py        historical qualifying, for the backtest
+  tests/                    every test, run one file at a time
   Tyre_model/               curve fitting, the store, and its HTTP API
 data/                       what the model reads
 output/                     predictions, distribution, diagnostics
@@ -225,16 +231,16 @@ Not needed to run the model. To do it anyway:
 
 ```
 pip install -r requirements.txt -r requirements-pipeline.txt
-python -m Simülasyon.dataset --rebuild     # 2018-2025 laps, slow
-python -m Simülasyon.fetch                 # the current season
-python -m Simülasyon.clean
+python -m Simülasyon.data_prep.dataset --rebuild     # 2018-2025 laps, slow
+python -m Simülasyon.data_prep.fetch                 # the current season
+python -m Simülasyon.data_prep.clean
 python -m Simülasyon.Tyre_model.fit_tyre_curve
-python -m Simülasyon.overtaking
-python -m Simülasyon.neutralization
-python -m Simülasyon.pit_analysis
-python -m Simülasyon.team_affinity
-python -m Simülasyon.wet_conditions
-python -m Simülasyon.retirements
+python -m Simülasyon.data_prep.overtaking
+python -m Simülasyon.data_prep.neutralization
+python -m Simülasyon.data_prep.pit_analysis
+python -m Simülasyon.data_prep.team_affinity
+python -m Simülasyon.data_prep.wet_conditions
+python -m Simülasyon.data_prep.retirements
 python -m Simülasyon.calibrate
 python -m Simülasyon.parameters
 ```
@@ -245,15 +251,15 @@ commands put back.
 ## Tests
 
 ```
-python -m Simülasyon.test_pass_model            # 23
-python -m Simülasyon.test_team_affinity         # 37
-python -m Simülasyon.test_reactive_strategy     # 32
-python -m Simülasyon.test_weather               # 37
-python -m Simülasyon.test_dnf                   # 37
-python -m Simülasyon.test_parameters            # 25
-python -m Simülasyon.test_pipeline              # 22
-python -m Simülasyon.test_backtest              # 33
-python -m Simülasyon.test_starts                # 17
+python -m Simülasyon.tests.test_pass_model            # 23
+python -m Simülasyon.tests.test_team_affinity         # 37
+python -m Simülasyon.tests.test_reactive_strategy     # 32
+python -m Simülasyon.tests.test_weather               # 37
+python -m Simülasyon.tests.test_dnf                   # 37
+python -m Simülasyon.tests.test_parameters            # 25
+python -m Simülasyon.tests.test_pipeline              # 22
+python -m Simülasyon.tests.test_backtest              # 33
+python -m Simülasyon.tests.test_starts                # 17
 python -m Simülasyon.Tyre_model.test_tyre_curve # 58
 ```
 

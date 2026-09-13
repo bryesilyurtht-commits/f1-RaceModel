@@ -35,7 +35,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from Simülasyon.dataset import load_laps, clean_race, iter_races
+from Simülasyon.data_prep.dataset import load_laps, clean_race, iter_races
 from Simülasyon.fuel_effect import get_track_params
 
 warnings.filterwarnings('ignore')
@@ -46,7 +46,10 @@ warnings.filterwarnings('ignore')
 # hardcoded to one machine, which is fine until the project runs anywhere
 # else - a checkout, a colleague's laptop, or the Linux box Streamlit Cloud
 # serves it from, where that path simply does not exist.
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Three levels up, not two: this file lives in Simülasyon/data_prep/,
+# so the repo root is one directory further than it used to be.
+BASE_DIR = os.path.dirname(os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
 
 SEASONS = [2022, 2023, 2024, 2025]

@@ -2,7 +2,7 @@
 F1 Prediction Simulation - v2.1 - wet_conditions.py
 What the lap data can and cannot say about running in the rain.
 
-    python -m Simülasyon.wet_conditions
+    python -m Simülasyon.data_prep.wet_conditions
 
 This runs before any wet model is built, and its job is to find out which
 parts of that model are allowed to claim they were measured. The answer turns
@@ -50,7 +50,10 @@ import os
 import numpy as np
 import pandas as pd
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Three levels up, not two: this file lives in Simülasyon/data_prep/,
+# so the repo root is one directory further than it used to be.
+BASE_DIR = os.path.dirname(os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
 
 LAPS = os.path.join(DATA_DIR, 'laps_2018_2025.csv')

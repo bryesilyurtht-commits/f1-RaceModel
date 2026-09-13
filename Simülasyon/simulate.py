@@ -813,7 +813,7 @@ def team_affinity_2026(pace):
     silent zero would look like "no circuit suits anyone in particular", which
     is a claim, not an absence.
 
-    Build it with:  python -m Simülasyon.team_affinity
+    Build it with:  python -m Simülasyon.data_prep.team_affinity
     """
     if not AFFINITY_TEAM_2026:
         return None, 'disabled'

@@ -8,7 +8,7 @@ So these test the things that must be true of any valid start: everyone is in
 it once, the times agree with the order, and which car the code happens to
 process first does not decide who gets ahead.
 
-    python -m Simülasyon.test_starts
+    python -m Simülasyon.tests.test_starts
 """
 
 import numpy as np

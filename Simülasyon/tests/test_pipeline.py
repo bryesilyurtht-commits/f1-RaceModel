@@ -4,7 +4,7 @@ Acceptance tests for the v2.4 data flow.
 The checks the v2.4 brief lists for data. They run against a temporary copy of
 the manifest so nothing here disturbs the real one.
 
-    python -m Simülasyon.test_pipeline
+    python -m Simülasyon.tests.test_pipeline
 """
 
 import json
@@ -92,7 +92,7 @@ def test_changing_a_producers_source_makes_its_output_stale():
         P.save_manifest(manifest)
 
         tampered = P.load_manifest()
-        tampered['_code']['clean.py'] = 'deadbeefdeadbeef'
+        tampered['_code']['data_prep/clean.py'] = 'deadbeefdeadbeef'
         P.save_manifest(tampered)
 
         entries, _ = P.scan()
@@ -253,7 +253,7 @@ def test_the_manifest_records_what_it_needs_to():
         for field in ('hash', 'step', 'module', 'needs', 'required', 'seen',
                       'size'):
             assert field in entry, field
-        assert manifest['_code']['clean.py']
+        assert manifest['_code']['data_prep/clean.py']
 
 
 # --- 5. the run summary ----------------------------------------------------

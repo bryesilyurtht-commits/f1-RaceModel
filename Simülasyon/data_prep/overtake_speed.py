@@ -100,7 +100,7 @@ import pandas as pd
 if __package__ in (None, ''):
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from Simülasyon.overtaking import (collect_events, CLOSE_GAP, MIN_ADVANTAGE,
+from Simülasyon.data_prep.overtaking import (collect_events, CLOSE_GAP, MIN_ADVANTAGE,
                                    PIT_BLACKOUT)
 from Simülasyon.target_race import TARGET_EVENT, TRACK_ALIASES
 
@@ -112,7 +112,10 @@ warnings.filterwarnings('ignore')
 # hardcoded to one machine, which is fine until the project runs anywhere
 # else - a checkout, a colleague's laptop, or the Linux box Streamlit Cloud
 # serves it from, where that path simply does not exist.
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Three levels up, not two: this file lives in Simülasyon/data_prep/,
+# so the repo root is one directory further than it used to be.
+BASE_DIR = os.path.dirname(os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
 CACHE_DIR = os.path.join(BASE_DIR, 'cache')
 
@@ -154,7 +157,7 @@ def load_2026_laps():
     """
     path = os.path.join(DATA_DIR, f'f1_{SEASON}_laps.csv')
     if not os.path.exists(path):
-        raise SystemExit(f'missing {path} - run: python -m Simülasyon.fetch')
+        raise SystemExit(f'missing {path} - run: python -m Simülasyon.data_prep.fetch')
 
     df = pd.read_csv(path)
     df['LapTime_s'] = pd.to_timedelta(df['LapTime']).dt.total_seconds()
@@ -675,7 +678,7 @@ def trap_vs_track_character(trap):
     is anything. A flat slope means the trap number travels.
     """
     try:
-        from Simülasyon.team_affinity import pc_coordinates, canonical
+        from Simülasyon.data_prep.team_affinity import pc_coordinates, canonical
     except Exception:
         return None
 

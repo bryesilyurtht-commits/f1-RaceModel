@@ -5,7 +5,7 @@ Every test is one of the checks the v2.1 roadmap requires. Most run against
 small hand-built states rather than a race: a 10,000-simulation run can tell
 you the answer moved but not which of forty interacting rules moved it.
 
-    python -m Simülasyon.test_weather
+    python -m Simülasyon.tests.test_weather
 """
 
 import hashlib

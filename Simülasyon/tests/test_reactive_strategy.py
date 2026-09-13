@@ -6,7 +6,7 @@ version counts as finished. They are written against small hand-built states
 rather than a race, because a 10,000-simulation run can only tell you the
 answer changed - not which of thirty interacting rules changed it.
 
-    python -m Simülasyon.test_reactive_strategy
+    python -m Simülasyon.tests.test_reactive_strategy
 """
 
 import numpy as np

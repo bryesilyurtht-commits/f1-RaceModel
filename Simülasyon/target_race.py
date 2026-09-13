@@ -10,7 +10,7 @@ After changing TARGET_RACE, re-run fetch.py so the laps/grid split matches the
 new target (its laps get withheld from training, its grid gets downloaded
 instead of the placeholder from the old target):
 
-    python -m Simülasyon.fetch
+    python -m Simülasyon.data_prep.fetch
 
 Then run the simulation as usual:
 

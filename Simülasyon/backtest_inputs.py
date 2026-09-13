@@ -49,7 +49,7 @@ import tempfile
 import numpy as np
 import pandas as pd
 
-from Simülasyon import clean as C
+from Simülasyon.data_prep import clean as C
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, 'data')

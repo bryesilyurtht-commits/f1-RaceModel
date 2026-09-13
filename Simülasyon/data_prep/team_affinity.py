@@ -85,7 +85,7 @@ import pandas as pd
 if __package__ in (None, ''):
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from Simülasyon.track_features import FEATURE_SET, standardise
+from Simülasyon.data_prep.track_features import FEATURE_SET, standardise
 
 # --- config -----------------------------------------------------------------
 
@@ -93,7 +93,10 @@ from Simülasyon.track_features import FEATURE_SET, standardise
 # hardcoded to one machine, which is fine until the project runs anywhere
 # else - a checkout, a colleague's laptop, or the Linux box Streamlit Cloud
 # serves it from, where that path simply does not exist.
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Three levels up, not two: this file lives in Simülasyon/data_prep/,
+# so the repo root is one directory further than it used to be.
+BASE_DIR = os.path.dirname(os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
 
 SEASON = 2026

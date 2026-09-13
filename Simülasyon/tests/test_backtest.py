@@ -7,7 +7,7 @@ returns a number, and the number goes in the report - so these test the cases
 where the right answer is known in advance: a perfect prediction, a coin flip,
 and a prediction that is exactly the baseline.
 
-    python -m Simülasyon.test_backtest
+    python -m Simülasyon.tests.test_backtest
 """
 
 import numpy as np

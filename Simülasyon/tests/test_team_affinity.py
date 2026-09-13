@@ -17,7 +17,7 @@ And the percentage conversion has to scale with the circuit. A test that only
 checked the number at one lap time would pass for the old fixed-seconds form
 too, so it is checked at two.
 
-Run:  python -m Simülasyon.test_team_affinity
+Run:  python -m Simülasyon.tests.test_team_affinity
 """
 
 import os
@@ -28,9 +28,10 @@ import numpy as np
 import pandas as pd
 
 if __package__ in (None, ''):
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    sys.path.insert(0, os.path.dirname(os.path.dirname(
+        os.path.dirname(os.path.abspath(__file__)))))
 
-from Simülasyon import team_affinity as TA
+from Simülasyon.data_prep import team_affinity as TA
 
 
 def make_results(rows):
@@ -290,7 +291,7 @@ class TestOutputFile(unittest.TestCase):
     def setUpClass(cls):
         path = os.path.join(TA.DATA_DIR, f'team_affinity_{TA.SEASON}.csv')
         if not os.path.exists(path):
-            raise unittest.SkipTest('run python -m Simülasyon.team_affinity first')
+            raise unittest.SkipTest('run python -m Simülasyon.data_prep.team_affinity first')
         cls.df = pd.read_csv(path)
 
     def test_required_columns(self):

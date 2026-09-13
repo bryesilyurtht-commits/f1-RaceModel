@@ -2,7 +2,7 @@
 F1 Prediction Simulation - v2.2 - retirements.py
 Why cars stop, how often, when in the race, and whether a safety car follows.
 
-    python -m Simülasyon.retirements
+    python -m Simülasyon.data_prep.retirements
 
 What was there before
 ---------------------
@@ -57,7 +57,10 @@ import re
 import numpy as np
 import pandas as pd
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Three levels up, not two: this file lives in Simülasyon/data_prep/,
+# so the repo root is one directory further than it used to be.
+BASE_DIR = os.path.dirname(os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
 
 RESULTS = os.path.join(DATA_DIR, 'results_2018_2025.csv')

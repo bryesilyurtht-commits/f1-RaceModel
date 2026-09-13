@@ -24,7 +24,7 @@ import sys
 import numpy as np
 import pandas as pd
 
-from Simülasyon.dataset import load_laps, DRY_COMPOUNDS, TYRE_SEASONS
+from Simülasyon.data_prep.dataset import load_laps, DRY_COMPOUNDS, TYRE_SEASONS
 
 # --- config -----------------------------------------------------------------
 

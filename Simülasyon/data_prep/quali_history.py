@@ -28,8 +28,8 @@ decision comes back in its corrected form. The backtest is a reconstruction
 from the present archive, not a replay of what was knowable at the time, and
 `pipeline.py` says the same thing about every other file here.
 
-    python -m Simülasyon.quali_history            fetch what is missing
-    python -m Simülasyon.quali_history --all      refetch everything
+    python -m Simülasyon.data_prep.quali_history            fetch what is missing
+    python -m Simülasyon.data_prep.quali_history --all      refetch everything
 """
 
 import argparse
@@ -38,7 +38,10 @@ import warnings
 
 import pandas as pd
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Three levels up, not two: this file lives in Simülasyon/data_prep/,
+# so the repo root is one directory further than it used to be.
+BASE_DIR = os.path.dirname(os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
 CACHE_DIR = os.path.join(BASE_DIR, 'cache')
 OUTPUT = os.path.join(DATA_DIR, 'quali_history.csv')

@@ -260,6 +260,7 @@ python -m Simülasyon.tests.test_parameters            # 25
 python -m Simülasyon.tests.test_pipeline              # 22
 python -m Simülasyon.tests.test_backtest              # 33
 python -m Simülasyon.tests.test_starts                # 17
+python -m Simülasyon.tests.test_frontend              # 28
 python -m Simülasyon.Tyre_model.test_tyre_curve # 58
 ```
 

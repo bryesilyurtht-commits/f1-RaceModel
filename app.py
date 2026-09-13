@@ -112,6 +112,34 @@ CSS = f"""
   }}
   .lede {{ color: {MUTED}; font-size: 0.88rem; margin: 0.15rem 0 0.9rem 0; }}
   .rule {{ border-top: 1px solid {HAIRLINE}; margin: 1.1rem 0 0.9rem 0; }}
+  /* Which run is on screen. First thing under the title, so that reading a
+     number and knowing where it came from are the same glance. */
+  .runbar {{
+      font-size: 0.80rem; color: {MUTED}; padding: 0.4rem 0.65rem;
+      border: 1px solid {HAIRLINE}; border-radius: 3px;
+      background: #fff; margin: 0.2rem 0 0.9rem 0;
+      font-variant-numeric: tabular-nums;
+  }}
+  /* The one answer the page exists to give, before any chart. */
+  .headline {{ display: flex; gap: 2.6rem; flex-wrap: wrap;
+               margin: 0.1rem 0 0.2rem 0; }}
+  .headline .k {{ font-size: 0.68rem; text-transform: uppercase;
+                  letter-spacing: 0.08em; color: {MUTED}; font-weight: 600; }}
+  .headline .v {{ font-size: 1.75rem; font-weight: 600; color: {INK};
+                  font-variant-numeric: tabular-nums; line-height: 1.15; }}
+  .headline .sub {{ font-size: 0.78rem; color: {MUTED}; }}
+  /* Narrow screens: Streamlit keeps columns side by side well past the point
+     where a chart is readable, so the two-up row is unwound by hand. Nothing
+     is hidden - a cramped chart is still the data. */
+  @media (max-width: 900px) {{
+      .block-container {{ padding-left: 0.8rem; padding-right: 0.8rem; }}
+      div[data-testid="stHorizontalBlock"] {{ flex-wrap: wrap; }}
+      div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {{
+          min-width: 100% !important; flex: 1 1 100% !important;
+      }}
+      .headline .v {{ font-size: 1.4rem; }}
+      .statline {{ gap: 1.2rem; }}
+  }}
   .badge {{
       display: inline-block; font-size: 0.68rem; letter-spacing: 0.02em;
       padding: 0.05rem 0.4rem; border: 1px solid {HAIRLINE}; border-radius: 2px;
@@ -158,6 +186,144 @@ def statline(pairs):
         f'<div class="stat"><div class="k">{k}</div>'
         f'<div class="v">{v}</div></div>' for k, v in pairs)
     st.markdown(f'<div class="statline">{cells}</div>', unsafe_allow_html=True)
+
+
+# --- naming -----------------------------------------------------------------
+
+# What each switch is called on screen. The code name stays in the help text,
+# because it is what a bug report and the run summary will both say - but it
+# should not be the first thing a reader has to decode.
+#
+# Each label was checked against what the flag does in simulate.py rather than
+# against its name. LOCK_START_ORDER is the one that repays that: it reads as
+# a start-only setting and is passed to build_start_gaps at the race start and
+# again at a red-flag restart, so the help text says both.
+FLAG_LABELS = {
+    'ENFORCE_STINT_CAP': 'Enforce tyre stint limits',
+    'RECOST_STRATEGIES': 'Recalculate strategy costs',
+    'REACTIVE_PIT_V2': 'Decide pit laps against rivals',
+    'REACTIVE_PIT': 'Decide pit laps on tyre wear',
+    'PER_DRIVER_STRATEGY': 'Let strategy vary by driver',
+    'NEUTRAL_FREEZES_GAPS': 'Freeze gaps under neutralisation',
+    'SC_BUNCHING': 'Bunch the field behind a safety car',
+    'RED_FLAG_ENABLED': 'Allow red flags',
+    'NEUTRAL_LAST_LAP_KNOWN': 'Let strategy see the safety car schedule',
+    'START_MODEL': 'Race the start',
+    'LOCK_START_ORDER': 'Keep opening order fixed',
+    'DNF_ENABLED': 'Include retirements',
+    'TWO_CAUSE_DNF': 'Separate crashes from failures',
+    'ACCIDENT_NEUTRALIZATION': 'Let crashes bring out flags',
+    'EVOLUTION_ENABLED': 'Include track evolution',
+    'AFFINITY_ENABLED': 'Include circuit suitability',
+    'AFFINITY_TEAM_2026': 'Use 2026 team suitability',
+    'GAP_IN_PASS_MODEL': 'Use gap in overtaking model',
+    'TEAM_PASS_ENABLED': 'Include team overtaking differences',
+    'IS_WET': 'Start the race on a wet track',
+    'WEATHER_ENABLED': 'Include weather',
+    'WEATHER_MAY_BREAK_PLAN': 'Let weather break the strategy',
+}
+
+# Extra scope the flag's own description does not carry.
+FLAG_NOTES = {
+    'LOCK_START_ORDER': 'Applies to the race start and to a red-flag '
+                        'restart. It does not touch the real prohibitions on '
+                        'passing under a safety car or virtual safety car, '
+                        'which are always in force.',
+    'START_MODEL': 'Calibrated on 1313 measured starts. Off, the opening lap '
+                   'keeps the grid order, which is what this project did '
+                   'before v2.7.',
+}
+
+
+def flag_label(name):
+    return FLAG_LABELS.get(name, name)
+
+
+def flag_help(name):
+    """The flag's own description, its code name, and any extra scope."""
+    parts = [S.RUNTIME_FLAGS.get(name, '')]
+    if name in FLAG_NOTES:
+        parts.append(FLAG_NOTES[name])
+    parts.append(f'Code name: {name}')
+    return '\n\n'.join(p for p in parts if p)
+
+
+# --- which run am I looking at ----------------------------------------------
+
+
+def settings_signature(n_sims, seed, flags, scenario):
+    """
+    Everything that changes a result, as one comparable value.
+
+    Streamlit re-runs the script on every widget change, so the sidebar can
+    say one thing while the result on screen came from another. Keeping the
+    settings that produced a result beside it is what lets the page notice.
+    """
+    return {'n_sims': int(n_sims), 'seed': int(seed),
+            'flags': dict(sorted(flags.items())), 'scenario': scenario}
+
+
+def settings_drift(run, live):
+    """
+    What the sidebar now says that the shown result did not use.
+
+    Returns a list of human-readable differences, empty when the result still
+    matches the controls. A silent mismatch is the failure this exists for:
+    the result would keep its old label while looking like an answer to the
+    new question.
+    """
+    was = run.get('settings')
+    if not was:
+        return []
+
+    drift = []
+    if was['n_sims'] != live['n_sims']:
+        drift.append(f'simulations {was["n_sims"]:,} -> {live["n_sims"]:,}')
+    if was['seed'] != live['seed']:
+        drift.append(f'seed {was["seed"]} -> {live["seed"]}')
+    if was['scenario'] != live['scenario']:
+        drift.append(f'weather {was["scenario"] or "off"} -> '
+                     f'{live["scenario"] or "off"}')
+    for name in sorted(set(was['flags']) | set(live['flags'])):
+        before, after = was['flags'].get(name), live['flags'].get(name)
+        if before != after:
+            drift.append(f'{flag_label(name)} {"on" if before else "off"} -> '
+                         f'{"on" if after else "off"}')
+    return drift
+
+
+def run_header(run, live=None):
+    """
+    One line at the top of a result saying what it is, before anything else.
+
+    The race, where the numbers came from, how many runs finished, and - when
+    the controls have moved since - that this is no longer an answer to what
+    the sidebar is asking.
+    """
+    result = run['result']
+    summary = run.get('run_summary') or {}
+    completed = summary.get('completed_runs', result.get('n_sims'))
+    requested = summary.get('requested_runs', completed)
+
+    bits = [f'{result["event"]} {result["season"]}',
+            f'{completed:,} simulations']
+    if requested and completed != requested:
+        bits[-1] = f'{completed:,} of {requested:,} simulations'
+    bits.append(f'seed {run["settings"]["seed"]}'
+                if run.get('settings') else 'seed unknown')
+    bits.append(run.get('source', 'run in this session'))
+
+    st.markdown(
+        '<div class="runbar">' + ' &nbsp;·&nbsp; '.join(bits) + '</div>',
+        unsafe_allow_html=True)
+
+    drift = settings_drift(run, live) if live else []
+    if drift:
+        st.warning('Settings changed - run again to update results. '
+                   'Showing the previous run, which used: '
+                   + '; '.join(drift[:6])
+                   + ('; and more' if len(drift) > 6 else '') + '.')
+    return drift
 
 
 # --- data on disk -----------------------------------------------------------
@@ -244,7 +410,11 @@ def grid_delta_chart(summary, pace):
         height=22 * len(d) + 70, margin=dict(l=0, r=0, t=8, b=28),
         paper_bgcolor=GROUND, plot_bgcolor=GROUND,
         font=dict(color=INK, size=11), showlegend=False,
-        xaxis=dict(title=dict(text='positions gained against the grid',
+        # Colour repeats the sign, it does not carry it alone: the axis names
+        # both directions, the hover is signed, and the table above holds the
+        # same numbers for anyone the colours do not separate.
+        xaxis=dict(title=dict(text='← lost   ·   expected positions vs grid   '
+                                   '·   gained →',
                               font=dict(size=10, color=MUTED)),
                    zeroline=True, zerolinecolor=HAIRLINE, zerolinewidth=1,
                    gridcolor=HAIRLINE, tickfont=dict(size=9, color=MUTED)),
@@ -254,25 +424,45 @@ def grid_delta_chart(summary, pace):
 
 
 def share_card(result):
-    """K4: one figure, vertical, readable on a phone. Plotly's own menu saves it."""
+    """
+    One figure, vertical, readable on a phone. Plotly's own menu saves it.
+
+    The stack is win and podium-minus-win, so the bar ends at the podium
+    probability rather than at win plus podium. Winning is already a podium,
+    and adding the two would put a driver on 102%.
+
+    That arithmetic was always right and the labels were not: the second
+    segment was called "podium" when it is the rest of the podium, and its
+    hover showed no number at all. A reader has only the legend to go on, so
+    a correct chart with those labels reads as the wrong one. The segments
+    now say what they are and both hovers carry their value.
+    """
     import plotly.graph_objects as go
 
     d = result['summary'].head(10).copy()
     d = d.iloc[::-1]
     fig = go.Figure()
-    fig.add_bar(x=d['P_win'], y=d['Driver'], orientation='h', name='win',
+    fig.add_bar(x=d['P_win'], y=d['Driver'], orientation='h', name='Win',
                 marker_color=ACCENT,
-                hovertemplate='%{y} wins %{x:.1%}<extra></extra>')
+                customdata=d['P_podium'],
+                hovertemplate='%{y}<br>win %{x:.1%}<br>'
+                              'podium %{customdata:.1%}<extra></extra>')
     fig.add_bar(x=d['P_podium'] - d['P_win'], y=d['Driver'], orientation='h',
-                name='podium', marker_color='#b9c8d8',
-                hovertemplate='%{y} podium<extra></extra>')
+                name='P2-P3', marker_color='#b9c8d8',
+                customdata=d['P_podium'],
+                hovertemplate='%{y}<br>second or third %{x:.1%}<br>'
+                              'podium %{customdata:.1%}<extra></extra>')
     fig.update_layout(
         barmode='stack', height=460, width=520,
         margin=dict(l=0, r=12, t=58, b=34),
         paper_bgcolor=GROUND, plot_bgcolor=GROUND,
+        # The image travels without the page around it, so it has to say what
+        # it is on its own: which race, how many runs, and that the bar ends
+        # at the podium probability rather than at a sum of two.
         title=dict(text=f'{result["event"]} {result["season"]}<br>'
                         f'<span style="font-size:11px;color:{MUTED}">'
-                        f'{result["n_sims"]:,} simulations</span>',
+                        f'{result["n_sims"]:,} simulations &nbsp;·&nbsp; '
+                        f'bar length is the podium probability</span>',
                    font=dict(size=15, color=INK), x=0, xanchor='left'),
         legend=dict(orientation='h', y=-0.10, x=0, font=dict(size=10,
                                                              color=MUTED),
@@ -301,9 +491,11 @@ def show_parameters(result):
         f'of number it is, what it was measured against, and how much the '
         f'result moves when it moves.</div>', unsafe_allow_html=True)
     st.markdown(
-        '<div class="lede">A measured value and a hand-set one are not the '
-        'same evidence. The two that want attention are marked in colour; '
-        'the rest separate by type.</div>', unsafe_allow_html=True)
+        '<div class="lede">These say where a number came from, not how good '
+        'it is. A measured value can rest on a thin sample and a hand-set one '
+        'can be close; what the labels give you is the ability to ask. The '
+        'two that most often want a second look are marked in colour.</div>',
+        unsafe_allow_html=True)
 
     legend = '  '.join(
         f'{badge(k)} <span style="font-size:0.74rem;color:{MUTED}">'
@@ -325,32 +517,124 @@ def show_parameters(result):
             f'</div><div class="val">{b["value"]}</div></div>')
     st.markdown(''.join(rows), unsafe_allow_html=True)
 
+    # The fit descriptions and the full switch list are a step down, not gone:
+    # they are why someone technical opens this tab, and they are also what
+    # makes the first screen unreadable for everyone else.
     st.markdown('')
-    with st.expander('every setting this run used'):
+    with st.expander('Technical details - every setting this run used'):
         st.code('\n'.join(result['param_lines']), language=None)
+
+
+def headline(result):
+    """
+    The answer, before any chart.
+
+    Who is most likely to win, who is most likely to reach the podium, and
+    how many races that was read off. The two can be different drivers and
+    are not forced to agree - a car that wins often and retires often is a
+    real thing, and hiding it would be the point of the page going missing.
+    """
+    summary = result['summary']
+    win = summary.loc[summary['P_win'].idxmax()]
+    podium = summary.loc[summary['P_podium'].idxmax()]
+
+    cells = [('most likely winner',
+              f'{win["Driver"]} {win["P_win"]:.1%}',
+              str(win['Team'])),
+             ('most likely podium',
+              f'{podium["Driver"]} {podium["P_podium"]:.1%}',
+              str(podium['Team'])),
+             ('simulations', f'{result["n_sims"]:,}',
+              f'{result["n_laps"]} laps')]
+    html = ''.join(f'<div><div class="k">{k}</div>'
+                   f'<div class="v">{v}</div>'
+                   f'<div class="sub">{s}</div></div>' for k, v, s in cells)
+    st.markdown(f'<div class="headline">{html}</div>', unsafe_allow_html=True)
+
+
+def results_table(result):
+    """
+    The predicted order, as a table a person can read.
+
+    Probabilities as percentages rather than as 0.317, sorted by expected
+    finish, and the columns most readers want first. The rest - causes of
+    retirement, stop count, circuit suitability, the strategy string - are a
+    checkbox away rather than gone, because they are the reason someone
+    technical opens this at all.
+
+    Sorting is done on the numbers and the formatting is display only, so a
+    percentage column still orders numerically rather than alphabetically.
+    """
+    summary = result['summary']
+    pace = result['pace']
+
+    show = summary.copy()
+    if 'grid' not in show.columns:
+        show['grid'] = show['Driver'].map(pace.set_index('Driver')['grid'])
+
+    # why a car did not finish, not only whether. The two columns and the
+    # finishing probability are the whole of it - there is no third cause the
+    # simulation can produce.
+    causes = result.get('dnf_by_driver')
+    if causes is not None:
+        show = show.merge(causes, on='Driver', how='left')
+
+    show = show.sort_values('mean_pos').reset_index(drop=True)
+
+    base = ['Driver', 'Team', 'grid', 'mean_pos', 'P_win', 'P_podium',
+            'P_points']
+    extra = ['P_dnf', 'P_accident', 'P_mechanical', 'stops', 'affinity',
+             'strategy']
+
+    more = st.checkbox('More columns', value=False, key='more_columns',
+                       help='Retirement causes, stop count, circuit '
+                            'suitability and the chosen strategy.')
+    cols = base + (extra if more else [])
+    cols = [c for c in cols if c in show.columns]
+
+    percent = st.column_config.NumberColumn
+    st.dataframe(
+        show[cols], width='stretch', hide_index=True,
+        column_config={
+            'grid': st.column_config.NumberColumn('Grid', format='%d'),
+            'mean_pos': percent(
+                'Expected finish', format='%.1f',
+                help='The average finishing position across every simulation. '
+                     'It is a mean, not a position anyone finishes in: a car '
+                     'that either wins or retires averages out in the middle.'),
+            'P_win': percent('Win', format='%.1f%%'),
+            'P_podium': percent(
+                'Podium', format='%.1f%%',
+                help='Finishing in the top three. Winning is already included '
+                     'in this, so podium is never smaller than win.'),
+            'P_points': percent('Points', format='%.1f%%',
+                                help='Finishing in the top ten.'),
+            'P_dnf': percent('Retires', format='%.1f%%'),
+            'P_accident': percent('Crash', format='%.1f%%'),
+            'P_mechanical': percent('Failure', format='%.1f%%'),
+            'stops': percent('Stops', format='%.2f'),
+        })
 
 
 def show_results(result):
     summary = result['summary']
     pace = result['pace']
 
-    winner = float(result['total'].min(axis=1).mean())
-    grid_arr = pace['grid'].to_numpy()
-    shift = float(np.abs(result['positions'] - grid_arr[None, :]).mean())
-
-    statline([
-        ('laps', f'{result["n_laps"]}'),
-        ('simulations', f'{result["n_sims"]:,}'),
-        ('pole', f'{S.POLE_DRIVER} {S.POLE_TIME:.3f}s'),
-        ('mean winning time', f'{winner / 60:.1f} min'),
-        ('mean shift from grid', f'{shift:.2f} pos'),
-    ])
+    headline(result)
     rule()
 
+    eyebrow('predicted results')
+    st.markdown(
+        '<div class="lede">Sorted by expected finish. Percentages are read '
+        'off the simulations, not off a single race.</div>',
+        unsafe_allow_html=True)
+    results_table(result)
+
+    rule()
     left, right = st.columns([1.02, 1])
 
     with left:
-        eyebrow('finishing probability')
+        eyebrow('finishing position probabilities')
         st.markdown(
             '<div class="lede">Each row is one car, each column a finishing '
             'position. A tight band is a predictable car; a smear is one whose '
@@ -364,56 +648,53 @@ def show_results(result):
     with right:
         eyebrow('against the grid')
         st.markdown(
-            '<div class="lede">Mean finish against starting slot. This is the '
-            'only thing the model can be scored on before the race.</div>',
+            '<div class="lede">Expected positions gained or lost relative to '
+            'the starting grid. Positive is a gain. This is what the model '
+            'expects to happen, not a score against what did - the race has '
+            'not been run.</div>',
             unsafe_allow_html=True)
         st.plotly_chart(grid_delta_chart(summary, pace),
                         width='stretch',
                         config={'displaylogo': False})
 
-    rule()
-    eyebrow('classification')
-    # summarize() already carries grid, so this only picks an order
-    show = summary.copy()
-    if 'grid' not in show.columns:
-        show['grid'] = show['Driver'].map(pace.set_index('Driver')['grid'])
-
-    # why a car did not finish, not only whether. The two columns and the
-    # finishing probability are the whole of it - there is no third cause the
-    # simulation can produce.
-    causes = result.get('dnf_by_driver')
-    if causes is not None:
-        show = show.merge(causes, on='Driver', how='left')
-
-    cols = ['Driver', 'Team', 'grid', 'mean_pos', 'P_win', 'P_podium',
-            'P_points', 'P_accident', 'P_mechanical', 'P_dnf', 'stops',
-            'affinity', 'strategy']
-    cols = [c for c in cols if c in show.columns]
-    st.dataframe(
-        show[cols], width='stretch', hide_index=True,
-        column_config={
-            'mean_pos': st.column_config.NumberColumn('mean pos', format='%.2f'),
-            'P_win': st.column_config.NumberColumn('win', format='%.3f'),
-            'P_podium': st.column_config.NumberColumn('podium', format='%.3f'),
-            'P_points': st.column_config.NumberColumn('points', format='%.3f'),
-            'P_dnf': st.column_config.NumberColumn('dnf', format='%.3f'),
-            'P_accident': st.column_config.NumberColumn('crash',
-                                                        format='%.3f'),
-            'P_mechanical': st.column_config.NumberColumn('failure',
-                                                          format='%.3f'),
-            'stops': st.column_config.NumberColumn('stops', format='%.2f'),
-        })
-
     show_retirements(result)
+
+    rule()
+    eyebrow('race context')
+    winner = float(result['total'].min(axis=1).mean())
+    grid_arr = pace['grid'].to_numpy()
+    # Absolute, not signed: this is how far the model moves cars, which is a
+    # description of the simulation and not a measure of whether it is right.
+    shift = float(np.abs(result['positions'] - grid_arr[None, :]).mean())
+    statline([
+        ('laps', f'{result["n_laps"]}'),
+        ('pole', f'{S.POLE_DRIVER} {S.POLE_TIME:.3f}s'),
+        ('mean winning time', f'{winner / 60:.1f} min'),
+        ('mean move from grid', f'{shift:.2f} pos'),
+    ])
+    st.markdown(
+        '<div class="lede">Mean move from grid is the average distance a car '
+        'ends up from where it started, ignoring direction. It says how much '
+        'the model shuffles the field, not how often it is right. Accuracy is '
+        'not measured here - see docs/BACKTEST.md.</div>',
+        unsafe_allow_html=True)
 
     rule()
     eyebrow('shareable')
     st.markdown(
-        '<div class="lede">No parameters, no diagnostics. Use the camera icon '
-        'on the chart to save it.</div>', unsafe_allow_html=True)
-    st.plotly_chart(share_card(result), width='content',
-                    config={'displaylogo': False,
-                            'toImageButtonOptions': {'scale': 2}})
+        '<div class="lede">One image with the race, the run count and nothing '
+        'else. Bars end at the podium probability.</div>',
+        unsafe_allow_html=True)
+    with st.expander('Show chart to download', expanded=False):
+        st.plotly_chart(share_card(result), width='content',
+                        config={'displaylogo': False,
+                                'toImageButtonOptions': {
+                                    'scale': 2,
+                                    'filename': f'{result["event"]}_'
+                                                f'{result["season"]}'}})
+        st.markdown(
+            '<div class="lede">Hover the chart and use the camera icon to '
+            'save a PNG.</div>', unsafe_allow_html=True)
 
 
 def retirement_chart(summary, n_laps):
@@ -558,7 +839,7 @@ def show_comparison(runs):
             unsafe_allow_html=True)
     else:
         rows = ''.join(
-            f'<div class="paramrow"><div class="name">{k}</div>'
+            f'<div class="paramrow"><div class="name">{flag_label(k)}</div>'
             f'<div style="color:{MUTED};font-size:0.80rem">'
             f'{"on" if v[0] else "off"} &rarr; '
             f'<b style="color:{ATTENTION}">{"on" if v[1] else "off"}</b></div>'
@@ -569,32 +850,61 @@ def show_comparison(runs):
         st.warning('The seeds differ, so part of what you see below is noise '
                    'rather than the flags.')
 
+    # Two runs of different races are two different questions. Putting them
+    # side by side is allowed, but the difference between them is not the
+    # effect of anything.
+    if ra['result']['event'] != rb['result']['event']:
+        st.warning(f'These are different races - {ra["result"]["event"]} '
+                   f'against {rb["result"]["event"]}. The columns can be read '
+                   f'side by side, but the difference between them is not a '
+                   f'comparison of settings.')
+
     rule()
     eyebrow('side by side')
     sa = ra['result']['summary'].set_index('Driver')
     sb = rb['result']['summary'].set_index('Driver')
+    # Probability differences are in percentage points, not in percent: 20%
+    # going to 25% is five points, and calling it "+25%" is a different and
+    # wrong claim. The column says pp so the unit is never in doubt.
     joined = pd.DataFrame({
         'Team': sa['Team'],
-        f'mean_pos {a}': sa['mean_pos'],
-        f'mean_pos {b}': sb['mean_pos'].reindex(sa.index),
-        'mean_pos diff': (sb['mean_pos'].reindex(sa.index) - sa['mean_pos']),
-        f'P_win {a}': sa['P_win'],
-        f'P_win {b}': sb['P_win'].reindex(sa.index),
-        'P_win diff': (sb['P_win'].reindex(sa.index) - sa['P_win']),
+        'Expected finish A': sa['mean_pos'],
+        'Expected finish B': sb['mean_pos'].reindex(sa.index),
+        'Finish diff': (sb['mean_pos'].reindex(sa.index) - sa['mean_pos']),
+        'Win A': sa['P_win'],
+        'Win B': sb['P_win'].reindex(sa.index),
+        'Win diff (pp)': (sb['P_win'].reindex(sa.index) - sa['P_win']) * 100,
+        'Podium A': sa['P_podium'],
+        'Podium B': sb['P_podium'].reindex(sa.index),
+        'Podium diff (pp)': (sb['P_podium'].reindex(sa.index)
+                             - sa['P_podium']) * 100,
     }).reset_index()
 
+    st.caption(f'A = {a}    ·    B = {b}')
     st.dataframe(
-        joined.sort_values('P_win diff', ascending=False),
+        joined.sort_values('Win diff (pp)', ascending=False),
         width='stretch', hide_index=True,
-        column_config={c: st.column_config.NumberColumn(
-            c, format='%.3f') for c in joined.columns if c != 'Driver'
-            and c != 'Team'})
+        column_config={
+            'Expected finish A': st.column_config.NumberColumn(format='%.1f'),
+            'Expected finish B': st.column_config.NumberColumn(format='%.1f'),
+            'Finish diff': st.column_config.NumberColumn(
+                format='%.2f', help='B minus A, in positions. Negative is a '
+                                    'better expected finish under B.'),
+            'Win A': st.column_config.NumberColumn(format='%.1f%%'),
+            'Win B': st.column_config.NumberColumn(format='%.1f%%'),
+            'Win diff (pp)': st.column_config.NumberColumn(
+                format='%+.1f', help='Percentage points, not percent: 20% to '
+                                     '25% is +5.0.'),
+            'Podium A': st.column_config.NumberColumn(format='%.1f%%'),
+            'Podium B': st.column_config.NumberColumn(format='%.1f%%'),
+            'Podium diff (pp)': st.column_config.NumberColumn(format='%+.1f'),
+        })
 
-    biggest = joined.reindex(joined['mean_pos diff'].abs()
+    biggest = joined.reindex(joined['Finish diff'].abs()
                              .sort_values(ascending=False).index).head(3)
-    moved = ', '.join(f'{row["Driver"]} {row["mean_pos diff"]:+.2f}'
+    moved = ', '.join(f'{row["Driver"]} {row["Finish diff"]:+.2f}'
                       for _, row in biggest.iterrows())
-    st.markdown(f'<div class="lede">Largest movement in mean finishing '
+    st.markdown(f'<div class="lede">Largest movement in expected finishing '
                 f'position: {moved}.</div>', unsafe_allow_html=True)
 
 
@@ -915,20 +1225,42 @@ def show_run(result):
 
 
 def show_diagnostics():
+    """
+    The per-lap report, which this interface cannot build.
+
+    Diagnostics are written by the console run, not by the app, so the honest
+    state here is "none for this run" rather than an instruction to go and
+    open a terminal. What is on disk belongs to some other run and is offered
+    as that, clearly labelled - the failure worth preventing is a reader
+    taking a report of one race for a report of the one on screen.
+    """
     path = os.path.join(OUT_DIR, 'diagnostics.html')
     if not os.path.exists(path):
-        st.info('Run `python -m Simülasyon.simulate` once to build '
-                'output/diagnostics.html. The interface does not rebuild it, '
-                'on purpose - it is the console run\'s artefact and is shown '
-                'here unchanged.')
+        st.info('No diagnostics available for this run.')
+        st.markdown(
+            '<div class="lede">The per-lap report is produced by the console '
+            'run rather than by this page, and none has been written '
+            'yet.</div>', unsafe_allow_html=True)
+        with st.expander('Building one (developers)'):
+            st.caption('`python -m Simülasyon.simulate` writes '
+                       'output/diagnostics.html. This page shows it unchanged '
+                       'and never rebuilds it.')
         return
+
     stamp = pd.Timestamp(os.path.getmtime(path), unit='s')
-    st.markdown(f'<div class="lede">output/diagnostics.html, built '
-                f'{stamp:%Y-%m-%d %H:%M}. Shown exactly as it is written.</div>',
-                unsafe_allow_html=True)
+    st.info('No diagnostics available for this run.')
+    rule()
+    eyebrow('report from an earlier console run')
+    st.markdown(
+        f'<div class="lede">Built {stamp:%Y-%m-%d %H:%M}. This is a different '
+        f'run from the one shown on the Result tab - it was not produced by '
+        f'this session, and its laps, retirements and safety cars are its '
+        f'own.</div>', unsafe_allow_html=True)
     with open(path, encoding='utf-8') as f:
         html = f.read()
     components.html(html, height=900, scrolling=True)
+    with st.expander('Where this came from'):
+        st.caption(f'{path}, written by `python -m Simülasyon.simulate`.')
 
 
 # --- main -------------------------------------------------------------------
@@ -958,17 +1290,34 @@ def main():
                         unsafe_allow_html=True)
 
         st.markdown('')
-        n_sims = st.select_slider('simulations',
+        n_sims = st.select_slider('Simulations',
                                   options=[1000, 2000, 5000, 10000, 20000],
-                                  value=10000)
-        seed = st.number_input('seed', value=int(S.RANDOM_SEED), step=1)
+                                  value=10000,
+                                  help='More runs narrow the sampling noise. '
+                                       'They do not make the model more '
+                                       'correct.')
+
+        # Run sits with the two controls almost everyone touches, not below
+        # eight groups of model flags. Reaching it should not require reading
+        # anything.
+        go_now = st.button('Run simulation', type='primary', width='stretch')
+        if st.session_state.runs:
+            if st.button(f'Clear {len(st.session_state.runs)} run(s)',
+                         width='stretch'):
+                st.session_state.runs = []
+                st.rerun()
 
         st.markdown('')
-        eyebrow('model')
+        eyebrow('advanced model settings')
         st.markdown('<div class="lede">Each switch selects between two '
                     'modelled behaviours. The constants around them are '
                     'calibrations and stay out of reach.</div>',
                     unsafe_allow_html=True)
+        seed = st.number_input('Seed', value=int(S.RANDOM_SEED), step=1,
+                               help='The same seed and the same settings give '
+                                    'the same result, to the digit. Changing '
+                                    'it resamples; it does not change the '
+                                    'model.')
 
         groups = {
             'Tyres': ['ENFORCE_STINT_CAP', 'RECOST_STRATEGIES'],
@@ -976,7 +1325,7 @@ def main():
                          'PER_DRIVER_STRATEGY'],
             'Neutralisation': ['NEUTRAL_FREEZES_GAPS', 'SC_BUNCHING',
                                'RED_FLAG_ENABLED', 'NEUTRAL_LAST_LAP_KNOWN'],
-            'Racing': ['LOCK_START_ORDER', 'EVOLUTION_ENABLED',
+            'Racing': ['START_MODEL', 'LOCK_START_ORDER', 'EVOLUTION_ENABLED',
                        'GAP_IN_PASS_MODEL', 'TEAM_PASS_ENABLED'],
             'Retirements': ['TWO_CAUSE_DNF', 'ACCIDENT_NEUTRALIZATION',
                             'DNF_ENABLED'],
@@ -992,17 +1341,17 @@ def main():
 
         flags = {}
         for title, names in groups.items():
-            with st.expander(title, expanded=title in ('Racing', 'Tyres')):
+            with st.expander(title, expanded=False):
                 for name in names:
                     flags[name] = st.checkbox(
-                        name, value=bool(getattr(S, name)),
-                        help=S.RUNTIME_FLAGS[name], key=f'flag_{name}')
+                        flag_label(name), value=bool(getattr(S, name)),
+                        help=flag_help(name), key=f'flag_{name}')
 
         scenario = S.WEATHER_SCENARIO
         if flags.get('WEATHER_ENABLED'):
             names = list(WX.SCENARIOS)
             scenario = st.selectbox(
-                'weather scenario', names,
+                'Weather scenario', names,
                 index=names.index(S.WEATHER_SCENARIO)
                 if S.WEATHER_SCENARIO in names else 0,
                 help='A scenario, not a forecast. Nothing here was measured '
@@ -1011,14 +1360,6 @@ def main():
                      'the rain doing this.')
             st.markdown(f'<div class="lede">{WX.SCENARIOS[scenario]}</div>',
                         unsafe_allow_html=True)
-
-        st.markdown('')
-        go_now = st.button('Run', type='primary', width='stretch')
-        if st.session_state.runs:
-            if st.button(f'Clear {len(st.session_state.runs)} run(s)',
-                         width='stretch'):
-                st.session_state.runs = []
-                st.rerun()
 
     # ---- header -----------------------------------------------------------
     st.markdown(f'# {S.TARGET_EVENT} {S.SEASON}')
@@ -1110,36 +1451,59 @@ def main():
         bar.empty()
         stage.empty()
 
-        changed = [k for k, v in settings['flags'].items()
+        changed = [flag_label(k) for k, v in settings['flags'].items()
                    if v != getattr(S, k)]
         label = (f'#{len(st.session_state.runs) + 1} '
                  + (', '.join(changed) if changed else 'defaults')
                  + f' | {settings["n_sims"]:,} | seed {settings["seed"]}')
-        st.session_state.runs.append({'label': label[:80], 'result': result})
+        # The settings are stored beside the result, not only rendered into a
+        # label: that is what lets the page notice later that the sidebar has
+        # moved on and the result on screen is answering the old question.
+        st.session_state.runs.append({
+            'label': label[:80], 'result': result,
+            'settings': settings_signature(
+                settings['n_sims'], settings['seed'], settings['flags'],
+                settings['scenario']),
+            'run_summary': result.get('run'),
+            'source': 'run in this session',
+            'changed': changed})
         st.session_state.runs = st.session_state.runs[-MAX_RUNS:]
+
+    live = settings_signature(n_sims, seed, flags,
+                              scenario if flags.get('WEATHER_ENABLED')
+                              else None)
 
     runs = st.session_state.runs
     if not runs:
         st.markdown('')
-        st.info('Set the flags on the left and press Run. Nothing is written '
-                'to disk and runs are kept only while this tab is open.')
-        rule()
-        eyebrow('last console run')
+        st.info('Press **Run simulation** on the left. Ten thousand races are '
+                'simulated lap by lap and the finishing order is read off the '
+                'distribution. Nothing is written to disk, and runs are kept '
+                'only while this tab is open.')
+
+        # A result from a console run is still a result, but it is not this
+        # session's and must not be able to pass for it.
         csv = os.path.join(OUT_DIR, 'predictions.csv')
         if os.path.exists(csv):
-            st.markdown('<div class="lede">output/predictions.csv, from the '
-                        'last `python -m Simülasyon.simulate`.</div>',
-                        unsafe_allow_html=True)
-            st.dataframe(pd.read_csv(csv), width='stretch',
-                         hide_index=True)
+            rule()
+            eyebrow('loaded result - not generated in this session')
+            st.markdown(
+                '<div class="lede">The prediction committed with the '
+                'repository, shown so the page is not empty before the first '
+                'run. Press Run to replace it with one of your own.</div>',
+                unsafe_allow_html=True)
+            st.dataframe(pd.read_csv(csv), width='stretch', hide_index=True)
+            with st.expander('Where this came from'):
+                st.caption(f'{csv}, written by '
+                           f'`python -m Simülasyon.simulate`.')
         return
 
     current = runs[-1]['result']
+    drift = run_header(runs[-1], live)
+
     tabs = st.tabs(['Result', 'Strategy', 'Weather', 'Parameters', 'Compare',
                     'Diagnostics'])
     with tabs[0]:
-        st.markdown(f'<div class="lede">{runs[-1]["label"]}</div>',
-                    unsafe_allow_html=True)
         show_results(current)
     with tabs[1]:
         show_strategy(current)

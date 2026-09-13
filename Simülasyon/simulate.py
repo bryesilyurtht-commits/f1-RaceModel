@@ -3124,8 +3124,14 @@ def source_badges(pace, track):
     # hand-set to a string matcher, and mislabelling a derived value as
     # hand-set is exactly the error this panel exists to prevent.
     rows = [
-        ('Grid', pace.attrs.get('grid_source', '?'),
+        # Named for what the value is, not for the area it belongs to. This
+        # row said "Grid" and showed 0.46 s/slot, which reads as a property of
+        # the starting grid rather than as the time one slot is worth at the
+        # end of lap one. Where the grid itself came from is its own row.
+        ('Start gap per grid slot', pace.attrs.get('grid_source', '?'),
          f'{track["grid_gap"]:.2f} s/slot', None),
+        ('Grid source', pace.attrs.get('grid_source', '?'),
+         f'{len(pace)} cars', None),
         ('Pole time', f'f1_{SEASON}_poles.csv', f'{POLE_TIME:.3f} s',
          'measured'),
         ('Pass rate', track.get('pass_source', '?'),

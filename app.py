@@ -56,6 +56,7 @@ from Simülasyon import target_race as TR
 from Simülasyon import dnf as DNF
 from Simülasyon import pipeline as PIPE
 from Simülasyon import weather as WX
+from Simülasyon import race_select as RACE
 
 OUT_DIR = os.path.join(BASE_DIR, 'output')
 DATA_DIR = os.path.join(BASE_DIR, 'data')
@@ -188,6 +189,20 @@ def statline(pairs):
     st.markdown(f'<div class="statline">{cells}</div>', unsafe_allow_html=True)
 
 
+# --- which races can be run -------------------------------------------------
+
+
+@st.cache_data(show_spinner=False)
+def race_catalogue():
+    """
+    Every 2026 round on disk, with whether it can be predicted.
+
+    Cached because it reads three CSVs to answer a question that only changes
+    when the pipeline runs, and the sidebar asks it on every interaction.
+    """
+    return RACE.available()
+
+
 # --- naming -----------------------------------------------------------------
 
 # What each switch is called on screen. The code name stays in the help text,
@@ -251,16 +266,21 @@ def flag_help(name):
 # --- which run am I looking at ----------------------------------------------
 
 
-def settings_signature(n_sims, seed, flags, scenario):
+def settings_signature(n_sims, seed, flags, scenario, race_round=None):
     """
     Everything that changes a result, as one comparable value.
 
     Streamlit re-runs the script on every widget change, so the sidebar can
     say one thing while the result on screen came from another. Keeping the
     settings that produced a result beside it is what lets the page notice.
+
+    The race is part of this. Switching round and not re-running is the most
+    misleading version of the mismatch, because the page title would name one
+    Grand Prix while the table underneath describes a different one.
     """
     return {'n_sims': int(n_sims), 'seed': int(seed),
-            'flags': dict(sorted(flags.items())), 'scenario': scenario}
+            'flags': dict(sorted(flags.items())), 'scenario': scenario,
+            'round': None if race_round is None else int(race_round)}
 
 
 def settings_drift(run, live):
@@ -277,6 +297,8 @@ def settings_drift(run, live):
         return []
 
     drift = []
+    if was.get('round') != live.get('round'):
+        drift.append(f'race round {was.get("round")} -> {live.get("round")}')
     if was['n_sims'] != live['n_sims']:
         drift.append(f'simulations {was["n_sims"]:,} -> {live["n_sims"]:,}')
     if was['seed'] != live['seed']:
@@ -311,6 +333,11 @@ def run_header(run, live=None):
         bits[-1] = f'{completed:,} of {requested:,} simulations'
     bits.append(f'seed {run["settings"]["seed"]}'
                 if run.get('settings') else 'seed unknown')
+    # The grid is the official one only for the round the pipeline fetched.
+    # Every other race starts from the qualifying order, which penalties can
+    # move, and a result must not imply otherwise.
+    if run.get('grid_source') and run['grid_source'] != 'official grid':
+        bits.append(f'grid: {run["grid_source"]}')
     bits.append(run.get('source', 'run in this session'))
 
     st.markdown(
@@ -1277,17 +1304,48 @@ def main():
     # ---- sidebar ----------------------------------------------------------
     with st.sidebar:
         eyebrow('race')
-        ok, on_disk = target_matches()
-        st.markdown(f'**{S.TARGET_EVENT}** &nbsp; {S.SEASON}',
-                    unsafe_allow_html=True)
-        if ok is False:
-            st.error(f'The data on disk was built for {on_disk}. Change '
-                     f'TARGET_RACE in target_race.py, then re-run fetch.py, '
-                     f'clean.py and team_affinity.py before trusting this.')
-        elif ok:
-            st.markdown(f'<div class="lede">grid, pace and affinity on disk '
-                        f'all belong to this race</div>',
-                        unsafe_allow_html=True)
+
+        # Any round that has qualified can be predicted, not only the one the
+        # pipeline last fetched for. Pace is rebuilt from the races before the
+        # chosen one, so each entry here means the same thing.
+        catalogue = race_catalogue()
+        ready = catalogue[catalogue.state == 'available']
+
+        if ready.empty:
+            st.error('No 2026 race on disk can be predicted. Run '
+                     '`python -m Simülasyon.pipeline --update --network`.')
+            st.stop()
+
+        options = list(ready['round'])
+        default = next((i for i, r in enumerate(options)
+                        if bool(ready.iloc[i]['is_pipeline_target'])),
+                       len(options) - 1)
+        chosen_round = st.selectbox(
+            f'Grand Prix  ·  {S.SEASON}', options, index=default,
+            format_func=lambda r: f'R{r}  '
+                                  f'{ready.set_index("round").loc[r, "event"]}',
+            help='Every round whose qualifying is on file. Pace is measured '
+                 'from the races before the one you pick, so a prediction '
+                 'never reads the race it is predicting.')
+        chosen = ready.set_index('round').loc[chosen_round]
+
+        st.markdown(
+            f'<div class="lede">pole {chosen["pole_driver"]} '
+            f'{chosen["pole_time"]:.3f}s &nbsp;·&nbsp; '
+            f'{chosen["races_of_pace"]} races of pace behind it</div>',
+            unsafe_allow_html=True)
+
+        if not chosen['is_pipeline_target']:
+            st.caption('Grid taken from the qualifying order. The official '
+                       'grid, with penalties applied, is only on file for '
+                       f'{catalogue[catalogue.is_pipeline_target].iloc[0]["event"]}.')
+
+        skipped = catalogue[catalogue.state != 'available']
+        if len(skipped):
+            with st.expander(f'{len(skipped)} race(s) not available'):
+                for _, row in skipped.iterrows():
+                    st.caption(f'R{row["round"]} {row["event"]} - '
+                               f'{row["reason"]}')
 
         st.markdown('')
         n_sims = st.select_slider('Simulations',
@@ -1362,7 +1420,7 @@ def main():
                         unsafe_allow_html=True)
 
     # ---- header -----------------------------------------------------------
-    st.markdown(f'# {S.TARGET_EVENT} {S.SEASON}')
+    st.markdown(f'# {chosen["event"]} {S.SEASON}')
     st.markdown(
         '<div class="lede">A lap-by-lap Monte Carlo of the race. Every '
         'parameter below is labelled with where it came from.</div>',
@@ -1378,7 +1436,8 @@ def main():
         settings = {'n_sims': int(n_sims), 'seed': int(seed),
                     'flags': dict(flags),
                     'scenario': scenario if flags.get('WEATHER_ENABLED')
-                    else None}
+                    else None,
+                    'round': int(chosen_round)}
 
         stage = st.empty()
         bar = st.progress(0.0, text='checking data')
@@ -1416,9 +1475,30 @@ def main():
             overrides['WEATHER_SCENARIO'] = settings['scenario']
 
         started = time.perf_counter()
-        stage.markdown('<div class="lede">simulating</div>',
-                       unsafe_allow_html=True)
+        built = None
+        grid_source = 'official grid'
         try:
+            # Point the model at the chosen race. This rebuilds pace from the
+            # rounds before it and re-imports simulate, because the pole, the
+            # circuit and the grid are resolved while its module body runs.
+            #
+            # Always released in the finally, and released before anything
+            # else touches the module: leaving the override in place would
+            # leave simulate reading a temporary directory that is about to
+            # stop existing, and it fails that by falling back to a constant
+            # rather than by raising.
+            stage.markdown('<div class="lede">preparing the race</div>',
+                           unsafe_allow_html=True)
+            built, why = RACE.activate(settings['round'])
+            if built is None:
+                bar.empty()
+                stage.empty()
+                st.error(f'That race could not be prepared: {why}')
+                st.stop()
+            grid_source = built['grid_source']
+
+            stage.markdown('<div class="lede">simulating</div>',
+                           unsafe_allow_html=True)
             # N_SIMS and seed are not flags, so they move the same way by
             # hand and go back the same way in the finally below
             old_n, old_seed = S.N_SIMS, S.RANDOM_SEED
@@ -1430,6 +1510,9 @@ def main():
                         min((i + 1) / n, 1.0),
                         text=f'lap {i + 1} of {n}  -  '
                              f'{settings["n_sims"]:,} races'))
+                result['run'] = PIPE.run_summary(
+                    S, result, time.perf_counter() - started,
+                    settings['n_sims'], result['n_sims'], 'complete')
             finally:
                 S.N_SIMS, S.RANDOM_SEED = old_n, old_seed
         except Exception as exc:                       # surface, do not hide
@@ -1437,23 +1520,23 @@ def main():
             stage.empty()
             st.error(f'{type(exc).__name__}: {exc}')
             st.stop()
+        finally:
+            RACE.release(built)
 
-        stage.markdown('<div class="lede">collecting results</div>',
-                       unsafe_allow_html=True)
-        elapsed = time.perf_counter() - started
-        try:
-            result['run'] = PIPE.run_summary(
-                S, result, elapsed, settings['n_sims'], result['n_sims'],
-                'complete')
+        # The summary is built inside the block above, while the module is
+        # still pointed at the race that was run. Building it here would
+        # record whichever race the module was restored to, which is the kind
+        # of label that is worse than none.
+        if result.get('run'):
             result['run']['stale_inputs'] = [e['artefact'] for e in stale]
-        except Exception:                              # noqa: BLE001
-            result['run'] = None
+            result['run']['grid_source'] = grid_source
         bar.empty()
         stage.empty()
 
         changed = [flag_label(k) for k, v in settings['flags'].items()
                    if v != getattr(S, k)]
         label = (f'#{len(st.session_state.runs) + 1} '
+                 f'{result["event"]} | '
                  + (', '.join(changed) if changed else 'defaults')
                  + f' | {settings["n_sims"]:,} | seed {settings["seed"]}')
         # The settings are stored beside the result, not only rendered into a
@@ -1463,15 +1546,16 @@ def main():
             'label': label[:80], 'result': result,
             'settings': settings_signature(
                 settings['n_sims'], settings['seed'], settings['flags'],
-                settings['scenario']),
+                settings['scenario'], settings['round']),
             'run_summary': result.get('run'),
             'source': 'run in this session',
+            'grid_source': grid_source,
             'changed': changed})
         st.session_state.runs = st.session_state.runs[-MAX_RUNS:]
 
     live = settings_signature(n_sims, seed, flags,
                               scenario if flags.get('WEATHER_ENABLED')
-                              else None)
+                              else None, chosen_round)
 
     runs = st.session_state.runs
     if not runs:

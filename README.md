@@ -156,6 +156,7 @@ Simülasyon/                 the model, and the one entry point to it
   simulate.py               the race model, and run() for the interface
   reactive_strategy.py      when to pit, priced against rivals and traffic
   starts.py                 the start and lap one, measured
+  race_select.py            predicting any 2026 round that has qualified
   weather.py                rain, a drying track, and the tyre that suits it
   dnf.py                    accidents, failures, and the flags they bring out
   tracks.py                 per-circuit constants
@@ -198,7 +199,20 @@ code. `docs/STATUS.md` is the shortest honest answer to "is this finished".
 
 ## Changing the race
 
-One line, in `Simülasyon/target_race.py`:
+Pick it in the interface. Every 2026 round whose qualifying is on file can be
+predicted, and driver pace is rebuilt from the rounds *before* the one chosen -
+so a prediction never reads the race it is predicting. Rebuilding the round the
+pipeline last fetched for reproduces its committed pace file exactly, which is
+what says the two paths are the same path.
+
+Two things differ from the fetched race. The official grid, with penalties
+applied, is only on file for that one; the others start from the qualifying
+order, and the run says which it used. And an early round has fewer races of
+pace behind it, which is why rounds without at least two are not offered rather
+than answered from fallback constants.
+
+To move the pipeline itself - which race gets its laps withheld and its grid
+downloaded - is still one line, in `Simülasyon/target_race.py`:
 
 ```python
 TARGET_RACE = 'italian'      # any key in RACE_REGISTRY
@@ -260,7 +274,8 @@ python -m Simülasyon.tests.test_parameters            # 25
 python -m Simülasyon.tests.test_pipeline              # 22
 python -m Simülasyon.tests.test_backtest              # 33
 python -m Simülasyon.tests.test_starts                # 17
-python -m Simülasyon.tests.test_frontend              # 28
+python -m Simülasyon.tests.test_frontend              # 33
+python -m Simülasyon.tests.test_race_select           # 21
 python -m Simülasyon.Tyre_model.test_tyre_curve # 58
 ```
 

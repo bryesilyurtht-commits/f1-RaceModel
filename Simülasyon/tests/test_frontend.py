@@ -303,6 +303,81 @@ def test_the_first_screen_offers_the_run_button_and_not_a_file_path():
     assert 'predictions.csv' not in opening
 
 
+# --- choosing a race --------------------------------------------------------
+
+def test_the_selector_offers_every_available_race():
+    from streamlit.testing.v1 import AppTest
+    from Simülasyon import race_select as RS
+
+    at = AppTest.from_file(os.path.join(ROOT, 'app.py'), default_timeout=900)
+    at.run()
+    offered = at.sidebar.selectbox[0].options
+    available = RS.available()
+    expected = len(available[available.state == 'available'])
+    assert len(offered) == expected, (len(offered), expected)
+
+
+def test_the_selector_defaults_to_the_race_the_pipeline_fetched():
+    from streamlit.testing.v1 import AppTest
+    from Simülasyon import race_select as RS
+
+    at = AppTest.from_file(os.path.join(ROOT, 'app.py'), default_timeout=900)
+    at.run()
+    frame = RS.available()
+    target = int(frame[frame.is_pipeline_target].iloc[0]['round'])
+    assert at.sidebar.selectbox[0].value == target
+
+
+def test_a_different_race_runs_and_is_named_on_the_page():
+    from streamlit.testing.v1 import AppTest
+
+    at = AppTest.from_file(os.path.join(ROOT, 'app.py'), default_timeout=900)
+    at.run()
+    at.sidebar.selectbox[0].set_value(6).run()
+    at.sidebar.select_slider[0].set_value(1000).run()
+    at.sidebar.button[0].click().run()
+
+    assert len(at.exception) == 0, [e.value for e in at.exception]
+    titles = [m.value for m in at.markdown if m.value.startswith('# ')]
+    assert 'Monaco' in titles[0], titles
+
+
+def test_a_race_off_the_pipeline_target_says_where_its_grid_came_from():
+    """Penalties move cars, and only the fetched race has the official grid."""
+    from streamlit.testing.v1 import AppTest
+
+    at = AppTest.from_file(os.path.join(ROOT, 'app.py'), default_timeout=900)
+    at.run()
+    at.sidebar.selectbox[0].set_value(6).run()
+    at.sidebar.select_slider[0].set_value(1000).run()
+    at.sidebar.button[0].click().run()
+
+    bar = [m.value for m in at.markdown
+           if m.value.startswith('<div class="runbar">')]
+    assert bar, 'no run bar'
+    assert 'qualifying order' in bar[0], bar[0]
+
+
+def test_changing_race_without_running_keeps_the_old_result_and_says_so():
+    """
+    The most misleading version of the mismatch: the title would name one
+    Grand Prix while the table underneath described another.
+    """
+    from streamlit.testing.v1 import AppTest
+
+    at = AppTest.from_file(os.path.join(ROOT, 'app.py'), default_timeout=900)
+    at.run()
+    at.sidebar.selectbox[0].set_value(6).run()
+    at.sidebar.select_slider[0].set_value(1000).run()
+    at.sidebar.button[0].click().run()
+    before = at.dataframe[0].value.copy()
+
+    at.sidebar.selectbox[0].set_value(12).run()
+    assert len(at.warning) == 1, [w.value for w in at.warning]
+    assert 'race round 6 -> 12' in str(at.warning[0].value)
+    assert at.dataframe[0].value.equals(before)
+
+
 def _run():
     tests = [(n, f) for n, f in sorted(globals().items())
              if n.startswith('test_') and callable(f)]

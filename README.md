@@ -181,6 +181,7 @@ output/                     predictions, distribution, diagnostics
   run_summary.json          what the committed sample prediction actually is
 CHANGELOG.md                what changed, and whether it changed predictions
 BACKTEST.md                 how good the predictions actually are
+STATUS.md                   what is done, part-done, and open
 ```
 
 `CHANGELOG.md` is the place to look before comparing a result against an older

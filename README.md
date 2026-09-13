@@ -167,6 +167,7 @@ data/                       what the model reads
 output/                     predictions, distribution, diagnostics
   run_summary.json          what the committed sample prediction actually is
 CHANGELOG.md                what changed, and whether it changed predictions
+BACKTEST.md                 how good the predictions actually are
 ```
 
 `CHANGELOG.md` is the place to look before comparing a result against an older
@@ -234,6 +235,7 @@ python -m Simülasyon.test_weather               # 37
 python -m Simülasyon.test_dnf                   # 37
 python -m Simülasyon.test_parameters            # 25
 python -m Simülasyon.test_pipeline              # 22
+python -m Simülasyon.test_backtest              # 33
 python -m Simülasyon.Tyre_model.test_tyre_curve # 58
 ```
 

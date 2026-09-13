@@ -84,10 +84,21 @@ from Simülasyon.Tyre_model.tyre_store import load as load_tyre_store
 # else - a checkout, a colleague's laptop, or the Linux box Streamlit Cloud
 # serves it from, where that path simply does not exist.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATA_DIR = os.path.join(BASE_DIR, 'data')
+
+# Both of these are normally the project's own data directory and the season
+# being predicted. The backtest overrides them, because scoring the model on a
+# 2024 race means pointing it at a directory holding that race's pre-race
+# inputs and nothing later.
+#
+# An environment variable rather than an argument: POLE_TIME is resolved at
+# import time, so the override has to be in place before the module body runs,
+# and the alternative was to restructure the module around a config object -
+# a large change to the race engine in aid of a measurement. Unset, which is
+# every normal run, nothing here behaves differently.
+DATA_DIR = os.environ.get('F1_DATA_DIR') or os.path.join(BASE_DIR, 'data')
 OUT_DIR = os.path.join(BASE_DIR, 'output')
 
-SEASON = 2026
+SEASON = int(os.environ.get('F1_SEASON') or 2026)
 # TARGET_EVENT and TRACK_ALIASES now come from target_race.py - change
 # TARGET_RACE there to switch which Grand Prix this predicts, then re-run
 # fetch.py so the laps/grid split matches.

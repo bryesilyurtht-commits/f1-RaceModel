@@ -1,5 +1,33 @@
 # Changelog
 
+## v2.6 - the measuring instrument, and what it has measured so far
+
+No model behaviour changed. `simulate.py` and `target_race.py` gained three
+environment overrides - `F1_DATA_DIR`, `F1_SEASON`, `F1_TARGET_RACE` - so the
+engine can be aimed at a past race without restructuring it. Unset, which is
+every normal run, nothing behaves differently: seed 42 still returns LEC 0.360,
+HAM 0.280 on 300 simulations, and all 271 earlier tests pass unchanged.
+
+**What is measured.** The two naive baselines, over 52 races from 2023 round 19
+to 2025 round 24. Grid order scores 3.141 mean absolute position error, 95%
+interval [2.867, 3.421] resampling whole races. The grid-history baseline
+scores 0.032 / 0.067 / 0.161 Brier on win / podium / points. `BACKTEST.md` has
+the sample rules, the calibration tables and the caveats.
+
+The 3.45 the status document reports is not reused. It is not compared against
+either, because the sample behind it is not known.
+
+**What is not measured.** The model itself. `tyre_curve_params.json` has no
+fallback and no per-cell record of which seasons fed it, so it can neither be
+withheld nor filtered to a cutoff; scoring the model leak-free needs that chain
+refitted per cutoff. Everything upstream of that is built and tested.
+
+**New.** `backtest.py` (scoring, baselines, universe, bootstrap), 33 tests in
+`test_backtest.py`, `backtest_inputs.py` (pre-race input assembly),
+`quali_history.py` and the 51 sessions it downloaded into
+`data/quali_history.csv` - historical qualifying, which the archive did not
+have and the model's delta-to-pole needs.
+
 ## v2.5 - packaging and a verified install
 
 The work in this release is engineering, not modelling. One import moved; no

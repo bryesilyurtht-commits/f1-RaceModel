@@ -21,6 +21,12 @@ Then run the simulation as usual:
 
 TARGET_RACE = 'italian'          # <-- change this one line to switch GP
 
+# The backtest overrides the line above, because scoring the model across a
+# season means switching circuit fifty times in one process rather than once by
+# hand. Unset, which is every normal run, the line above is what applies.
+import os as _os
+TARGET_RACE = _os.environ.get('F1_TARGET_RACE') or TARGET_RACE
+
 # --- registry -------------------------------------------------------------
 # key: short name used above.
 # event: the name simulate.py, tracks.py, fuel_effect.py and track_deg.py

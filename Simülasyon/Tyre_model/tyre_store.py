@@ -28,8 +28,14 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from tyre_curve import TyreCurve, TyreCurveError    # noqa: E402
 
-DEFAULT_PATH = os.path.join(r'C:\Users\Berat\Desktop\F1_Sim', 'data',
-                            'tyre_curve_params.json')
+# Found from this file's own location, not written down. The path was
+# hardcoded to one machine, which stayed invisible because simulate.py always
+# passes its own path explicitly - but pit_analysis.py's main() calls load()
+# with no argument, and that call is dead on any machine but the one this was
+# written on, cloud deployment included.
+DEFAULT_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    'data', 'tyre_curve_params.json')
 
 # Names the same circuit appears under across the project's CSVs.
 ALIASES = {

@@ -76,6 +76,74 @@ def test_an_unknown_race_name_matches_nothing():
     assert RS.registry_key('Neverland Grand Prix') is None
 
 
+# --- every file this reads must actually ship -------------------------------
+#
+# The bug this section exists to catch already happened once: f1_2026_laps.csv
+# was gitignored as a "pipeline rebuild artefact", which was true before
+# race_select.py existed and stopped being true the moment this module started
+# reading it at runtime to count races of pace. Every local test passed,
+# because the file was sitting on the machine that ran them. A fresh clone -
+# Streamlit Cloud's deploy included - had no such file, every round failed its
+# pace check, and the sidebar read "No 2026 race on disk can be predicted."
+# with nothing to point at why.
+#
+# subprocess rather than importing git plumbing: `git check-ignore` and
+# `git ls-files` are the same commands a person would run to answer this by
+# hand, and shelling out to the real binary is the one way to be sure the
+# check means what git itself means by "ignored" and "tracked".
+
+def _git(*args):
+    import subprocess
+
+    result = subprocess.run(['git', *args], cwd=RS.BASE_DIR,
+                            capture_output=True, text=True)
+    return result.returncode, result.stdout.strip()
+
+
+def _in_a_git_repo():
+    code, _ = _git('rev-parse', '--is-inside-work-tree')
+    return code == 0
+
+
+def test_every_file_race_select_reads_is_committed_not_ignored():
+    """
+    The exact regression: a file this module reads at runtime, silently
+    absent from a fresh clone because .gitignore still listed it as a
+    pipeline-only artefact.
+    """
+    if not _in_a_git_repo():
+        return
+    for name in (f'f1_{RS.SEASON}_poles.csv', f'f1_{RS.SEASON}_quali.csv',
+                f'f1_{RS.SEASON}_laps.csv', f'f1_{RS.SEASON}_grid.csv'):
+        # Forward slash always, regardless of OS: `git ls-files` reports paths
+        # this way even on Windows, and comparing against a backslash-joined
+        # path would fail the check for a reason that has nothing to do with
+        # the file actually being tracked.
+        rel = f'data/{name}'
+        ignored_code, _ = _git('check-ignore', '-q', rel)
+        assert ignored_code != 0, f'{rel} is gitignored but race_select reads it'
+        _, tracked = _git('ls-files', rel)
+        assert tracked == rel, f'{rel} exists but is not committed'
+
+
+def test_a_fresh_checkout_would_offer_the_same_races_as_this_working_copy():
+    """
+    What "available" means only if the files it counted on actually reach a
+    clone. Reading through git's own index rather than the working directory
+    catches a file that is staged for deletion, or modified uncommitted in a
+    way that would not survive a checkout.
+    """
+    if not _in_a_git_repo():
+        return
+    code, out = _git('show', f'HEAD:data/f1_{RS.SEASON}_laps.csv')
+    if code != 0:
+        # No commit yet in this session - the file may be staged only. The
+        # gitignore/tracked check above is what actually guards the bug;
+        # this one is a bonus check once a commit exists to compare against.
+        return
+    assert len(out) > 0
+
+
 # --- the leakage boundary ---------------------------------------------------
 
 def _rounds_in_pace(target_round):

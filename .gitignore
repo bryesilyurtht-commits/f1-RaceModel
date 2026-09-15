@@ -9,10 +9,16 @@ f1cache/
 # `python -m Simülasyon.dataset --rebuild` and `python -m Simülasyon.fetch`
 # put them back. Everything the interface actually reads is small and stays
 # in the repo, so a fresh clone runs without downloading anything.
+#
+# f1_2026_laps.csv is the exception: race_select.py reads it at runtime to
+# rebuild driver pace for whichever round is picked, so it moved from
+# "pipeline rebuild artefact" to "interface input" and is committed like the
+# rest of data/. Leaving it ignored meant a fresh clone - Streamlit Cloud
+# included - had every 2026 race marked unavailable, with no lap file to
+# count races of pace against.
 data/laps_*.csv
 data/stint_laps.csv
 data/stint_index.csv
-data/f1_2026_laps.csv
 data/f1_2026_laps_clean.csv
 data/overtaking_events.csv
 data/tyre_age_profile*.csv

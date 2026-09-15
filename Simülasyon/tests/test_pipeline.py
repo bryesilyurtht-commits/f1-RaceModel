@@ -183,6 +183,40 @@ def test_a_missing_required_artefact_blocks_and_an_optional_one_does_not():
         assert P.blocking(faked), 'a required file did not stop a prediction'
 
 
+def test_a_byproduct_of_a_required_step_does_not_block():
+    """
+    The exact bug this guards: f1_2026_laps_clean.csv is written by the same
+    step as driver_pace_2026.csv - required=True at the step level - but
+    nothing predict() calls reads it, only developer tools do. Before
+    optional_produces existed, every artefact a required step wrote inherited
+    that step's required flag, so a fresh clone with no committed copy of the
+    byproduct could not run a prediction for any race, not because anything it
+    needed was missing, but because of a file nothing needed at all.
+    """
+    with Manifest():
+        entries, _ = P.scan()
+        by_name = {e['artefact']: e for e in entries}
+        assert 'f1_2026_laps_clean.csv' in by_name
+        assert not by_name['f1_2026_laps_clean.csv']['required']
+        assert by_name['driver_pace_2026.csv']['required']
+
+        faked = [dict(e) for e in entries]
+        for entry in faked:
+            if entry['artefact'] == 'f1_2026_laps_clean.csv':
+                entry['state'] = P.MISSING
+        assert not P.blocking(faked), \
+            'a byproduct with no reader stopped a prediction'
+
+
+def test_every_optional_produces_entry_is_tracked_like_any_other():
+    """Untracked would mean no staleness, no hash, no line in a status report."""
+    with Manifest():
+        entries, current = P.scan()
+        names = {e['artefact'] for e in entries}
+        assert 'f1_2026_laps_clean.csv' in names
+        assert 'f1_2026_laps_clean.csv' in current
+
+
 def test_a_status_check_never_starts_a_download():
     with Manifest():
         entries, _ = P.scan()

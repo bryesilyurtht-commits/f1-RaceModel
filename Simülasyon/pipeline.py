@@ -69,6 +69,14 @@ HASH_BYTES = 1 << 20
 # marks the inputs a prediction cannot proceed without - everything else can be
 # absent and the model has a documented fallback for it.
 #
+# `optional_produces` is for the rest of what a step writes: byproducts a
+# developer tool reads (a stint inspector, a profiling script) but predict()
+# never does. It is tracked the same way - staleness, hashes, the manifest -
+# so a status report still shows it; it just never blocks a run, because
+# nothing a run needs is missing when it is. Confusing the two once meant a
+# fresh clone could not predict anything until it happened to run the same
+# developer tool that wanted the byproduct.
+#
 # The order of this list is the order the steps run in.
 STEPS = [
     dict(name='season laps', module='data_prep/fetch.py', network=True,
@@ -85,7 +93,11 @@ STEPS = [
 
     dict(name='driver pace', module='data_prep/clean.py', network=False,
          needs=['f1_2026_laps.csv', 'f1_2026_poles.csv'], required=True,
-         produces=['f1_2026_laps_clean.csv', 'driver_pace_2026.csv'],
+         produces=['driver_pace_2026.csv'],
+         # The lap-level file with the clean_lap flag kept. Read by
+         # inspect_stints.py, Tyre_model/deg.py and profile_run.py - all
+         # developer tools - and by nothing predict() calls.
+         optional_produces=['f1_2026_laps_clean.csv'],
          note='delta to pole and lap-to-lap sigma'),
 
     dict(name='team affinity', module='data_prep/team_affinity.py', network=False,
@@ -278,7 +290,12 @@ def scan(race=None):
         code_changed = (previous.get('_code', {}).get(step['module'])
                         not in (None, code))
 
-        for artefact in step['produces']:
+        # Required artefacts gate a run; optional ones are tracked the same
+        # way and gate nothing - see the note on optional_produces above.
+        artefacts = ([(a, step['required']) for a in step['produces']]
+                    + [(a, False) for a in step.get('optional_produces', [])])
+
+        for artefact, required in artefacts:
             path = os.path.join(DATA_DIR, artefact)
             exists = os.path.exists(path)
             digest = _hash_file(path) if exists else None
@@ -299,14 +316,14 @@ def scan(race=None):
             current[artefact] = {
                 'hash': digest, 'step': step['name'],
                 'module': step['module'], 'needs': step['needs'],
-                'required': step['required'],
+                'required': required,
                 'seen': was.get('seen', now) if digest == was.get('hash')
                         else now,
                 'size': os.path.getsize(path) if exists else 0,
             }
             entries.append({'artefact': artefact, 'state': state,
                             'reason': reason, 'step': step['name'],
-                            'required': step['required'],
+                            'required': required,
                             'network': step['network'], 'hash': digest})
 
     current['_code'] = {s['module']: _hash_module(s['module']) for s in STEPS}

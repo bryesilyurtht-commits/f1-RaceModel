@@ -378,6 +378,134 @@ def test_changing_race_without_running_keeps_the_old_result_and_says_so():
     assert at.dataframe[0].value.equals(before)
 
 
+# --- the representative race ------------------------------------------------
+#
+# The tab this replaced embedded output/diagnostics.html, which only the
+# console run writes. On a deployed copy that file never exists, so the tab
+# was permanently empty. Everything here is built from the run in memory, so
+# these tests need no file on disk and no console step either.
+
+
+def _traced(n_sims=400):
+    """A real run, for the lap traces only a real run produces."""
+    from Simülasyon import simulate as S
+
+    S.N_SIMS = n_sims
+    return S.run()
+
+
+def test_positions_are_a_permutation_on_every_lap():
+    """
+    Two cars cannot hold the same position. `order` is inverted to get the
+    per-driver view, and an inversion done wrong silently duplicates.
+    """
+    result = _traced()
+    position = APP.lap_positions(result)
+    for lap in range(position.shape[0]):
+        alive = position[lap][~np.isnan(position[lap])]
+        assert len(set(alive.tolist())) == len(alive), f'lap {lap + 1}'
+
+
+def test_positions_start_at_one():
+    position = APP.lap_positions(_traced())
+    assert np.nanmin(position) == 1
+
+
+def test_a_retired_car_stops_being_drawn():
+    """
+    A retired car keeps appearing in `order` - its clock became a sorting
+    marker that parks it at the back - so an untruncated line would show it
+    circulating last for the rest of the race.
+    """
+    result = _traced()
+    retired_lap = np.asarray(result['trace']['retired_lap'])
+    out = np.flatnonzero(retired_lap >= 0)
+    if not len(out):
+        return                      # no retirement in this run to check
+    position = APP.lap_positions(result)
+    for driver in out[:3]:
+        lap = int(retired_lap[driver])
+        assert not np.isnan(position[lap, driver]), 'cut one lap too early'
+        assert np.isnan(position[lap + 1:, driver]).all(), 'line ran on'
+
+
+def test_only_this_races_podium_carries_colour():
+    """
+    Twenty-three distinguishable hues is a colour puzzle, not a chart. The
+    legend names the three the chart actually highlights, and they are the
+    podium of this race rather than the favourites of the distribution.
+    """
+    result = _traced()
+    figure = APP.representative_chart(result)
+
+    position = APP.lap_positions(result)
+    drivers = list(result['pace']['Driver'])
+    finish = position[-1]
+    n = len(drivers)
+    order = np.argsort(np.where(np.isnan(finish), n + 1, finish))
+    podium = {drivers[i] for i in order[:3]}
+
+    # A set, not a list: fig.data is in the order traces were added, which is
+    # driver index order, while the legend is displayed by legendrank. What
+    # matters is which three are highlighted, not where they sit in the array.
+    named = {t.name for t in figure.data if t.showlegend} - {'retired'}
+    assert named == podium, (named, podium)
+
+    # And the legend itself reads in finishing order rather than array order.
+    ranked = sorted((t.legendrank, t.name) for t in figure.data
+                    if t.showlegend and t.name != 'retired')
+    assert [name for _, name in ranked] == [drivers[i] for i in order[:3]]
+
+
+def test_the_chart_puts_first_place_at_the_top():
+    figure = APP.representative_chart(_traced())
+    assert figure.layout.yaxis.autorange == 'reversed'
+
+
+def test_neutralisation_bands_group_consecutive_laps_and_name_themselves():
+    """
+    A band per lap would be unreadable and a band spanning a gap would be a
+    lie. Built synthetically because the representative race takes the modal
+    event profile, which at most circuits means no safety car at all.
+    """
+    result = _traced()
+    laps = result['trace']['order'].shape[0]
+    neutral = np.zeros(laps, dtype=np.int8)
+    neutral[4:7] = 1        # virtual safety car, laps 5-7
+    neutral[11:14] = 2      # safety car, laps 12-14
+    neutral[19] = 3         # red flag, lap 20
+    result['trace']['neutral'] = neutral
+
+    figure = APP.representative_chart(result)
+    shapes = list(figure.layout.shapes)
+    labels = [a.text for a in figure.layout.annotations]
+
+    assert len(shapes) == 3, len(shapes)
+    assert labels == ['virtual safety car', 'safety car', 'red flag'], labels
+
+    covered = set()
+    for shape in shapes:
+        covered |= set(range(int(round(shape.x0 + 0.5)),
+                            int(round(shape.x1 - 0.5)) + 1))
+    assert covered == set((np.flatnonzero(neutral > 0) + 1).tolist())
+
+
+def test_a_green_race_gets_no_bands():
+    result = _traced()
+    result['trace']['neutral'] = np.zeros(
+        result['trace']['order'].shape[0], dtype=np.int8)
+    assert not list(APP.representative_chart(result).layout.shapes)
+
+
+def test_a_result_without_traces_says_so_instead_of_raising():
+    """A run made before this panel existed has no trace to draw."""
+    import streamlit as st
+
+    stripped = {'n_sims': 100, 'report': None, 'trace': None,
+                'pace': pd.DataFrame({'Driver': ['AAA']})}
+    APP.show_representative(stripped)        # must not raise
+
+
 def _run():
     tests = [(n, f) for n, f in sorted(globals().items())
              if n.startswith('test_') and callable(f)]

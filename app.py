@@ -45,7 +45,6 @@ import time
 import numpy as np
 import pandas as pd
 import streamlit as st
-import streamlit.components.v1 as components
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 if BASE_DIR not in sys.path:
@@ -1251,43 +1250,232 @@ def show_run(result):
         '</div>' for name, value, note in rows), unsafe_allow_html=True)
 
 
-def show_diagnostics():
+def lap_positions(result):
     """
-    The per-lap report, which this interface cannot build.
+    Position per lap per driver in the representative race, retirements cut.
 
-    Diagnostics are written by the console run, not by the app, so the honest
-    state here is "none for this run" rather than an instruction to go and
-    open a terminal. What is on disk belongs to some other run and is offered
-    as that, clearly labelled - the failure worth preventing is a reader
-    taking a report of one race for a report of the one on screen.
+    `trace['order']` holds driver indices sorted by race time, so the position
+    of a driver on a lap is where their index sits in that row. Inverting the
+    permutation gives the per-driver view a chart needs.
+
+    A retired car keeps appearing in `order` after it stops - its clock became
+    a sorting marker, which parks it at the back - so drawing it unbroken would
+    show a car circulating last for the rest of the afternoon. Its line ends on
+    the lap it retired instead.
     """
-    path = os.path.join(OUT_DIR, 'diagnostics.html')
-    if not os.path.exists(path):
-        st.info('No diagnostics available for this run.')
+    order = np.asarray(result['trace']['order'])
+    n_laps, n_drivers = order.shape
+
+    position = np.empty((n_laps, n_drivers), dtype=float)
+    ranks = np.broadcast_to(np.arange(1, n_drivers + 1), order.shape)
+    np.put_along_axis(position, order, ranks.astype(float), axis=1)
+
+    retired_lap = result['trace'].get('retired_lap')
+    if retired_lap is not None:
+        retired_lap = np.asarray(retired_lap)
+        for driver in np.flatnonzero(retired_lap >= 0):
+            position[int(retired_lap[driver]) + 1:, driver] = np.nan
+    return position
+
+
+def representative_chart(result):
+    """
+    The one sampled race, lap by lap.
+
+    Three lines carry colour - the podium of this particular race - and the
+    rest are grey. Twenty-three distinguishable hues would be a colour puzzle
+    rather than a chart, and the question this answers is "how did the front of
+    it move", with the hover there for anyone following a specific car.
+
+    Neutralisation is shaded behind the lines because it explains shape that
+    pace does not: the lap everyone's gaps close up is a safety car, and
+    without the band the chart looks like twenty drivers simultaneously
+    changing their minds.
+    """
+    import plotly.graph_objects as go
+
+    position = lap_positions(result)
+    drivers = list(result['pace']['Driver'])
+    n_laps, n_drivers = position.shape
+    laps = np.arange(1, n_laps + 1)
+
+    finish = position[-1]
+    # A retired car has no finishing position on the last lap; rank it behind
+    # everyone still running rather than letting NaN sort to the front.
+    finish_order = np.argsort(np.where(np.isnan(finish), n_drivers + 1, finish))
+    podium = list(finish_order[:3])
+    podium_colour = {podium[0]: ACCENT, podium[1]: '#6e90b4',
+                     podium[2]: '#a9bed4'}
+
+    fig = go.Figure()
+
+    # --- neutralisation bands, behind everything ---------------------------
+    neutral = np.asarray(result['trace'].get('neutral', np.zeros(n_laps)))
+    labels = {1: 'virtual safety car', 2: 'safety car', 3: 'red flag'}
+    lap = 0
+    while lap < n_laps:
+        if neutral[lap] > 0:
+            kind = int(neutral[lap])
+            start = lap
+            while lap < n_laps and neutral[lap] == kind:
+                lap += 1
+            fig.add_vrect(x0=start + 0.5, x1=lap + 0.5,
+                          fillcolor='#f0d9c4' if kind == 3 else '#eef1f5',
+                          opacity=0.9, layer='below', line_width=0,
+                          annotation_text=labels.get(kind, 'neutralised'),
+                          annotation_position='top left',
+                          annotation_font=dict(size=9, color=MUTED))
+        else:
+            lap += 1
+
+    # --- the midfield, then the podium on top ------------------------------
+    pits = np.asarray(result['trace']['pits'])
+    for driver in range(n_drivers):
+        is_podium = driver in podium_colour
+        fig.add_trace(go.Scatter(
+            x=laps, y=position[:, driver], mode='lines',
+            name=drivers[driver],
+            line=dict(color=podium_colour.get(driver, '#d4d8de'),
+                      width=2.2 if is_podium else 1.0),
+            opacity=1.0 if is_podium else 0.75,
+            hovertemplate=f'{drivers[driver]} &nbsp; P%{{y:.0f}} '
+                          f'on lap %{{x}}<extra></extra>',
+            showlegend=is_podium, legendrank=int(finish[driver])
+            if not np.isnan(finish[driver]) else n_drivers,
+        ))
+
+        # Pit laps as markers on the line, so a position drop can be read as a
+        # stop rather than as a car falling apart.
+        stops = np.flatnonzero(pits[:, driver])
+        if len(stops):
+            fig.add_trace(go.Scatter(
+                x=laps[stops], y=position[stops, driver], mode='markers',
+                marker=dict(symbol='circle', size=5,
+                            color=podium_colour.get(driver, '#b6bcc5'),
+                            line=dict(width=1, color=GROUND)),
+                hovertemplate=f'{drivers[driver]} pits, lap %{{x}}'
+                              f'<extra></extra>',
+                showlegend=False))
+
+    # Retirements, marked where the line stops.
+    retired_lap = np.asarray(result['trace'].get('retired_lap',
+                                                 np.full(n_drivers, -1)))
+    out = np.flatnonzero(retired_lap >= 0)
+    if len(out):
+        fig.add_trace(go.Scatter(
+            x=[int(retired_lap[d]) + 1 for d in out],
+            y=[position[int(retired_lap[d]), d] for d in out],
+            mode='markers',
+            marker=dict(symbol='x', size=8, color=ATTENTION,
+                        line=dict(width=0)),
+            name='retired',
+            hovertemplate=[f'{drivers[d]} retires, lap '
+                           f'{int(retired_lap[d]) + 1}<extra></extra>'
+                           for d in out],
+            showlegend=True))
+
+    fig.update_layout(
+        height=470, margin=dict(l=0, r=0, t=10, b=34),
+        paper_bgcolor=GROUND, plot_bgcolor=GROUND,
+        font=dict(color=INK, size=11), hovermode='closest',
+        legend=dict(orientation='h', y=-0.16, x=0,
+                    font=dict(size=10, color=MUTED),
+                    bgcolor='rgba(0,0,0,0)'),
+        xaxis=dict(title=dict(text='lap', font=dict(size=10, color=MUTED)),
+                   showgrid=False, zeroline=False,
+                   tickfont=dict(size=9, color=MUTED),
+                   range=[0.5, n_laps + 0.5]),
+        yaxis=dict(title=dict(text='position', font=dict(size=10, color=MUTED)),
+                   autorange='reversed', dtick=2, gridcolor=HAIRLINE,
+                   zeroline=False, tickfont=dict(size=9, color=MUTED)),
+    )
+    return fig
+
+
+def show_representative(result):
+    """
+    One race out of the ten thousand, and what it is for.
+
+    The tab this replaced offered a report the console writes and the page
+    cannot, so it was permanently empty on a deployed copy. Everything here
+    comes out of the run already in memory - the same object the Result tab
+    reads - so it exists for every run, on any machine, with no second step.
+
+    The warning is the important part. A position chart looks like a forecast
+    and this one is not: it is a single sampled race, picked to be typical of
+    the distribution, and the distribution is the prediction. Read as "this is
+    what will happen" it is worse than no chart at all.
+    """
+    report = result.get('report')
+    trace = result.get('trace')
+    if not report or not trace:
+        st.info('This run carries no representative race.')
         st.markdown(
-            '<div class="lede">The per-lap report is produced by the console '
-            'run rather than by this page, and none has been written '
-            'yet.</div>', unsafe_allow_html=True)
-        with st.expander('Building one (developers)'):
-            st.caption('`python -m Simülasyon.simulate` writes '
-                       'output/diagnostics.html. This page shows it unchanged '
-                       'and never rebuilds it.')
+            '<div class="lede">The lap traces are collected during the '
+            'simulation. A result produced before this panel existed will not '
+            'have them - run again and it will.</div>',
+            unsafe_allow_html=True)
         return
 
-    stamp = pd.Timestamp(os.path.getmtime(path), unit='s')
-    st.info('No diagnostics available for this run.')
-    rule()
-    eyebrow('report from an earlier console run')
+    drivers = list(result['pace']['Driver'])
+    position = lap_positions(result)
+    winner = drivers[int(np.nanargmin(position[-1]))]
+
+    eyebrow('one race, not the prediction')
     st.markdown(
-        f'<div class="lede">Built {stamp:%Y-%m-%d %H:%M}. This is a different '
-        f'run from the one shown on the Result tab - it was not produced by '
-        f'this session, and its laps, retirements and safety cars are its '
-        f'own.</div>', unsafe_allow_html=True)
-    with open(path, encoding='utf-8') as f:
-        html = f.read()
-    components.html(html, height=900, scrolling=True)
-    with st.expander('Where this came from'):
-        st.caption(f'{path}, written by `python -m Simülasyon.simulate`.')
+        f'<div class="lede">Everything else on this page is a distribution '
+        f'over {result["n_sims"]:,} simulated races. This is a single one of '
+        f'them, chosen to be typical - the same number of retirements and '
+        f'safety cars that most races had, then the most likely finishing '
+        f'order among those. It shows what a race in this distribution '
+        f'<em>looks</em> like. It is not a forecast of Sunday, and the '
+        f'winner here is not the favourite - that is the Result tab.</div>',
+        unsafe_allow_html=True)
+
+    statline([
+        ('winner here', winner),
+        ('overtakes', f'{report["overtakes"]}'),
+        ('stops per driver', f'{report["stops"]:.2f}'),
+        ('retired', f'{report["retired"]}'),
+        ('neutralised laps', f'{report["neutral_laps"]}'),
+    ])
+
+    rule()
+    eyebrow('lap by lap')
+    st.markdown(
+        '<div class="lede">The podium of this race carries colour; everyone '
+        'else is grey. Dots are pit stops, crosses are retirements, and a '
+        'shaded band is a neutralisation.</div>', unsafe_allow_html=True)
+    st.plotly_chart(representative_chart(result), width='stretch',
+                    config={'displaylogo': False})
+
+    with st.expander('How this race was picked'):
+        st.markdown(
+            f'<div class="lede">Ranking every race by how likely its '
+            f'finishing order was would pick the race where nothing happened: '
+            f'a retirement puts a quick driver last, which is improbable for '
+            f'that driver, so any race with one scores badly. Instead the '
+            f'events are held fixed first and likelihood only breaks the '
+            f'tie.</div>', unsafe_allow_html=True)
+        st.markdown(''.join(
+            '<div class="paramrow"><div class="name">' + name + '</div>'
+            '<div style="color:' + MUTED + ';font-size:0.78rem">' + note
+            + '</div><div class="val" style="text-align:left">' + str(value)
+            + '</div></div>'
+            for name, value, note in [
+                ('Simulation', f'#{report["sim"]:,}',
+                 f'of {result["n_sims"]:,}'),
+                ('Event profile',
+                 f'{report["modal_retired"]} retirement(s), '
+                 f'SC {"yes" if report["modal_sc"] else "no"}',
+                 'the profile most races in this run had'),
+                ('Matching races', f'{report["pool"]:,}',
+                 'the pool this one was chosen from'),
+                ('Shortlisted', f'{report["candidates"]}',
+                 'top of that pool by likelihood'),
+                ('Likelihood', f'{report["loglik_percentile"]:.1%}',
+                 'percentile within the pool, finishers only'),
+            ]), unsafe_allow_html=True)
 
 
 # --- main -------------------------------------------------------------------
@@ -1585,8 +1773,11 @@ def main():
     current = runs[-1]['result']
     drift = run_header(runs[-1], live)
 
+    # "Diagnostics" promised a per-lap console report this page cannot build,
+    # so on a deployed copy the tab was permanently empty. It now shows the
+    # representative race, which every run carries in memory.
     tabs = st.tabs(['Result', 'Strategy', 'Weather', 'Parameters', 'Compare',
-                    'Diagnostics'])
+                    'Representative race'])
     with tabs[0]:
         show_results(current)
     with tabs[1]:
@@ -1599,7 +1790,7 @@ def main():
     with tabs[4]:
         show_comparison(runs)
     with tabs[5]:
-        show_diagnostics()
+        show_representative(current)
 
 
 if __name__ == '__main__':

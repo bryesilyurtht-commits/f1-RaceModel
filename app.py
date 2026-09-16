@@ -56,6 +56,7 @@ from Simülasyon import dnf as DNF
 from Simülasyon import pipeline as PIPE
 from Simülasyon import weather as WX
 from Simülasyon import race_select as RACE
+from Simülasyon import representative as REP
 
 OUT_DIR = os.path.join(BASE_DIR, 'output')
 DATA_DIR = os.path.join(BASE_DIR, 'data')
@@ -75,6 +76,18 @@ ATTENTION = '#b4541f'       # reserved for hand-set and fallback only
 # diverging red-to-green ramp would invent one.
 HEAT = [[0.0, '#f7f8fa'], [0.15, '#dce4ed'], [0.35, '#a9bed4'],
         [0.6, '#6e90b4'], [0.8, '#43678f'], [1.0, ACCENT]]
+
+# Compounds run along the same accent ramp, softest darkest, because softness
+# is an ordered quantity and the ramp already reads as one. Broadcast red and
+# yellow would be the louder convention and would also be the only place on
+# the page where colour is decoration rather than information.
+#
+# The wets leave the ramp: they are not a step further along the same scale,
+# they are a different afternoon, so they get a hue of their own.
+COMPOUND_COLOUR = {
+    'SOFT': ACCENT, 'MEDIUM': '#6e90b4', 'HARD': '#c3cdda',
+    'INTERMEDIATE': '#4f7f5f', 'WET': '#2f5f5f',
+}
 
 BADGE_STYLE = {
     'measured':  (MUTED, 'normal', 'normal'),
@@ -1250,9 +1263,9 @@ def show_run(result):
         '</div>' for name, value, note in rows), unsafe_allow_html=True)
 
 
-def lap_positions(result):
+def lap_positions(result, trace=None):
     """
-    Position per lap per driver in the representative race, retirements cut.
+    Position per lap per driver in one race, retirements cut.
 
     `trace['order']` holds driver indices sorted by race time, so the position
     of a driver on a lap is where their index sits in that row. Inverting the
@@ -1262,15 +1275,20 @@ def lap_positions(result):
     a sorting marker, which parks it at the back - so drawing it unbroken would
     show a car circulating last for the rest of the afternoon. Its line ends on
     the lap it retired instead.
+
+    `trace` defaults to the run's own representative race. Any other race from
+    the same run can be passed instead; the lap arrays are kept for all of
+    them, so a per-winner view costs a slice rather than a re-simulation.
     """
-    order = np.asarray(result['trace']['order'])
+    trace = trace or result['trace']
+    order = np.asarray(trace['order'])
     n_laps, n_drivers = order.shape
 
     position = np.empty((n_laps, n_drivers), dtype=float)
     ranks = np.broadcast_to(np.arange(1, n_drivers + 1), order.shape)
     np.put_along_axis(position, order, ranks.astype(float), axis=1)
 
-    retired_lap = result['trace'].get('retired_lap')
+    retired_lap = trace.get('retired_lap')
     if retired_lap is not None:
         retired_lap = np.asarray(retired_lap)
         for driver in np.flatnonzero(retired_lap >= 0):
@@ -1278,9 +1296,9 @@ def lap_positions(result):
     return position
 
 
-def representative_chart(result):
+def representative_chart(result, trace=None):
     """
-    The one sampled race, lap by lap.
+    One sampled race, lap by lap.
 
     Three lines carry colour - the podium of this particular race - and the
     rest are grey. Twenty-three distinguishable hues would be a colour puzzle
@@ -1294,7 +1312,8 @@ def representative_chart(result):
     """
     import plotly.graph_objects as go
 
-    position = lap_positions(result)
+    trace = trace or result['trace']
+    position = lap_positions(result, trace)
     drivers = list(result['pace']['Driver'])
     n_laps, n_drivers = position.shape
     laps = np.arange(1, n_laps + 1)
@@ -1310,7 +1329,7 @@ def representative_chart(result):
     fig = go.Figure()
 
     # --- neutralisation bands, behind everything ---------------------------
-    neutral = np.asarray(result['trace'].get('neutral', np.zeros(n_laps)))
+    neutral = np.asarray(trace.get('neutral', np.zeros(n_laps)))
     labels = {1: 'virtual safety car', 2: 'safety car', 3: 'red flag'}
     lap = 0
     while lap < n_laps:
@@ -1329,7 +1348,7 @@ def representative_chart(result):
             lap += 1
 
     # --- the midfield, then the podium on top ------------------------------
-    pits = np.asarray(result['trace']['pits'])
+    pits = np.asarray(trace['pits'])
     for driver in range(n_drivers):
         is_podium = driver in podium_colour
         fig.add_trace(go.Scatter(
@@ -1358,7 +1377,7 @@ def representative_chart(result):
                 showlegend=False))
 
     # Retirements, marked where the line stops.
-    retired_lap = np.asarray(result['trace'].get('retired_lap',
+    retired_lap = np.asarray(trace.get('retired_lap',
                                                  np.full(n_drivers, -1)))
     out = np.flatnonzero(retired_lap >= 0)
     if len(out):
@@ -1392,19 +1411,191 @@ def representative_chart(result):
     return fig
 
 
-def show_representative(result):
+def stint_chart(result, trace=None, stints=None):
     """
-    One race out of the ten thousand, and what it is for.
+    Every car's afternoon as bars: which tyre, how long, and where it stopped.
 
-    The tab this replaced offered a report the console writes and the page
-    cannot, so it was permanently empty on a deployed copy. Everything here
-    comes out of the run already in memory - the same object the Result tab
-    reads - so it exists for every run, on any machine, with no second step.
+    The chart the position trace cannot replace. A car dropping five places on
+    lap 18 and climbing back by 25 is a pit stop in one reading and a disaster
+    in another, and the position line alone does not say which. Here the stop
+    is the boundary between two bars and the tyre it fitted is the colour of
+    the second one.
 
-    The warning is the important part. A position chart looks like a forecast
-    and this one is not: it is a single sampled race, picked to be typical of
-    the distribution, and the distribution is the prediction. Read as "this is
-    what will happen" it is worse than no chart at all.
+    Ordered by finishing position, so the eye can go down the field and read
+    one-stop against two-stop rather than hunting for a driver by name.
+    """
+    import plotly.graph_objects as go
+
+    trace = trace or result['trace']
+    stints = stints if stints is not None else result['stints']
+    position = lap_positions(result, trace)
+    drivers = list(result['pace']['Driver'])
+    n_laps, n_drivers = position.shape
+
+    finish = position[-1]
+    order = list(np.argsort(np.where(np.isnan(finish), n_drivers + 1, finish)))
+    row_of = {driver: n_drivers - 1 - order.index(driver)
+              for driver in range(n_drivers)}
+
+    fig = go.Figure()
+    seen = set()
+    for stint in stints:
+        driver = stint['driver_idx']
+        compound = str(stint['compound'])
+        fig.add_trace(go.Bar(
+            x=[stint['length']], y=[row_of[driver]], base=[stint['start'] - 1],
+            orientation='h', width=0.64,
+            marker=dict(color=COMPOUND_COLOUR.get(compound, '#9aa3ae'),
+                        line=dict(color=GROUND, width=1)),
+            name=compound, legendgroup=compound,
+            showlegend=compound not in seen,
+            hovertemplate=f'{stint["driver"]} &nbsp; {compound.lower()}<br>'
+                          f'laps {stint["start"]}-{stint["end"]} '
+                          f'({stint["length"]})<extra></extra>',
+        ))
+        seen.add(compound)
+
+    # A retirement ends the bar early, and without a mark that is
+    # indistinguishable from a short final stint.
+    retired = [s for s in stints if s.get('retired')]
+    if retired:
+        fig.add_trace(go.Scatter(
+            x=[s['end'] for s in retired],
+            y=[row_of[s['driver_idx']] for s in retired],
+            mode='markers',
+            marker=dict(symbol='x', size=8, color=ATTENTION),
+            name='retired', showlegend=True,
+            hovertemplate=[f'{s["driver"]} retires, lap {s["end"]}'
+                           f'<extra></extra>' for s in retired]))
+
+    fig.update_layout(
+        barmode='stack', bargap=0.28,
+        height=22 * n_drivers + 96, margin=dict(l=0, r=0, t=10, b=34),
+        paper_bgcolor=GROUND, plot_bgcolor=GROUND,
+        font=dict(color=INK, size=11),
+        legend=dict(orientation='h', y=-0.08 - 2.2 / n_drivers, x=0,
+                    font=dict(size=10, color=MUTED),
+                    bgcolor='rgba(0,0,0,0)'),
+        xaxis=dict(title=dict(text='lap', font=dict(size=10, color=MUTED)),
+                   range=[0, n_laps], showgrid=False, zeroline=False,
+                   tickfont=dict(size=9, color=MUTED)),
+        yaxis=dict(tickmode='array',
+                   tickvals=[row_of[d] for d in range(n_drivers)],
+                   ticktext=[drivers[d] for d in range(n_drivers)],
+                   showgrid=False, zeroline=False, tickfont=dict(size=10)),
+    )
+    return fig
+
+
+def one_race_panel(result, entry, winner_view=False):
+    """
+    One race rendered: what it was, how it went, how it was picked.
+
+    Shared by the run's own representative race and by each winner's, because
+    they differ in which races were eligible and in nothing else. Keeping one
+    renderer is what stops the per-driver pages drifting into a second, subtly
+    different account of the same thing.
+    """
+    report, trace = entry['report'], entry['trace']
+    drivers = list(result['pace']['Driver'])
+    position = lap_positions(result, trace)
+    winner = drivers[int(np.nanargmin(position[-1]))]
+
+    cells = [('winner here', winner),
+             ('overtakes', f'{report["overtakes"]}'),
+             ('stops per driver', f'{report["stops"]:.2f}'),
+             ('retired', f'{report["retired"]}'),
+             ('neutralised laps', f'{report["neutral_laps"]}')]
+    if winner_view:
+        # The number that keeps this honest. A race is shown because the
+        # driver won it, and how often that happens is the whole context.
+        cells[0] = ('wins this race', f'{entry["share"]:.2%}')
+        cells.insert(1, ('of the run', f'{entry["wins"]:,} races'))
+    statline(cells)
+
+    rule()
+    eyebrow('lap by lap')
+    st.markdown(
+        '<div class="lede">The podium of this race carries colour; everyone '
+        'else is grey. Dots are pit stops, crosses are retirements, and a '
+        'shaded band is a neutralisation.</div>', unsafe_allow_html=True)
+    figures = entry.get('figures') or build_race_figures(result, entry)
+    st.plotly_chart(figures['position'], width='stretch',
+                    config={'displaylogo': False},
+                    key=f'pos_{entry.get("driver", "run")}_{report["sim"]}')
+
+    rule()
+    eyebrow('tyres and stops')
+    st.markdown(
+        '<div class="lede">One row per car, ordered by where it finished. '
+        'Each bar is a stint and its colour is the tyre; a boundary between '
+        'two bars is a pit stop.</div>', unsafe_allow_html=True)
+    st.plotly_chart(figures['stints'],
+                    width='stretch', config={'displaylogo': False},
+                    key=f'stint_{entry.get("driver", "run")}_{report["sim"]}')
+
+    with st.expander('How this race was picked'):
+        st.markdown(
+            '<div class="lede">Ranking every race by how likely its finishing '
+            'order was would pick the race where nothing happened: a '
+            'retirement puts a quick driver last, which is improbable for that '
+            'driver, so any race with one scores badly. Instead the events are '
+            'held fixed first and likelihood only breaks the tie.</div>',
+            unsafe_allow_html=True)
+        rows = [
+            ('Simulation', f'#{report["sim"]:,}', f'of {result["n_sims"]:,}'),
+            ('Races searched', f'{report["universe"]:,}',
+             'the ones this driver won' if winner_view
+             else 'every race in the run'),
+            ('Event profile',
+             f'{report["modal_retired"]} retirement(s), '
+             f'SC {"yes" if report["modal_sc"] else "no"}',
+             'the profile most of those races had'),
+            ('Matching races', f'{report["pool"]:,}',
+             'the pool this one was chosen from'),
+            ('Shortlisted', f'{report["candidates"]}',
+             'top of that pool by likelihood'),
+            ('Likelihood', f'{report["loglik_percentile"]:.1%}',
+             'percentile within the pool, finishers only'),
+        ]
+        st.markdown(''.join(
+            '<div class="paramrow"><div class="name">' + name + '</div>'
+            '<div style="color:' + MUTED + ';font-size:0.78rem">' + note
+            + '</div><div class="val" style="text-align:left">' + str(value)
+            + '</div></div>' for name, value, note in rows),
+            unsafe_allow_html=True)
+
+
+def build_race_figures(result, entry):
+    """
+    Both charts for one race, built once.
+
+    Streamlit renders every tab body on every interaction, so fifteen winner
+    pages meant twenty-eight plotly figures rebuilt on each click - measured at
+    2.4 s of lag per widget change. The figures are a pure function of a race
+    that will never change again, so they are built when the run finishes and
+    kept with it.
+    """
+    return {
+        'position': representative_chart(result, entry['trace']),
+        'stints': stint_chart(result, entry['trace'], entry['stints']),
+    }
+
+
+def show_representative(result, winners=None, typical=None):
+    """
+    A typical race, and a typical race for each driver who ever wins one.
+
+    A distribution says who is likely to win. It does not say what a race looks
+    like, and the two have different answers: the favourite wins a third of the
+    time, so two races in three are won by somebody else and none of them are
+    visible in a table of probabilities. One page per winner is where those
+    go.
+
+    The per-driver pages are the part that can mislead. Fifteen named pages
+    invite reading them as fifteen plausible Sundays, when one of them is a
+    race that happens two times in ten thousand. Every page leads with how
+    often its driver actually wins, for that reason.
     """
     report = result.get('report')
     trace = result.get('trace')
@@ -1417,65 +1608,40 @@ def show_representative(result):
             unsafe_allow_html=True)
         return
 
-    drivers = list(result['pace']['Driver'])
-    position = lap_positions(result)
-    winner = drivers[int(np.nanargmin(position[-1]))]
-
-    eyebrow('one race, not the prediction')
+    eyebrow('races, not the prediction')
     st.markdown(
         f'<div class="lede">Everything else on this page is a distribution '
-        f'over {result["n_sims"]:,} simulated races. This is a single one of '
-        f'them, chosen to be typical - the same number of retirements and '
-        f'safety cars that most races had, then the most likely finishing '
-        f'order among those. It shows what a race in this distribution '
-        f'<em>looks</em> like. It is not a forecast of Sunday, and the '
-        f'winner here is not the favourite - that is the Result tab.</div>',
+        f'over {result["n_sims"]:,} simulated races. These are single races '
+        f'out of it, each chosen to be typical of a set - the same number of '
+        f'retirements and safety cars that most of that set had, then the '
+        f'most likely finishing order among those. They show what a race in '
+        f'this distribution <em>looks</em> like. They are not forecasts of '
+        f'Sunday, and a driver having a page here says only that they win '
+        f'somewhere in ten thousand tries.</div>',
         unsafe_allow_html=True)
 
-    statline([
-        ('winner here', winner),
-        ('overtakes', f'{report["overtakes"]}'),
-        ('stops per driver', f'{report["stops"]:.2f}'),
-        ('retired', f'{report["retired"]}'),
-        ('neutralised laps', f'{report["neutral_laps"]}'),
-    ])
+    run_entry = typical or {'report': report, 'trace': trace,
+                            'stints': result['stints'], 'driver': 'run'}
 
-    rule()
-    eyebrow('lap by lap')
-    st.markdown(
-        '<div class="lede">The podium of this race carries colour; everyone '
-        'else is grey. Dots are pit stops, crosses are retirements, and a '
-        'shaded band is a neutralisation.</div>', unsafe_allow_html=True)
-    st.plotly_chart(representative_chart(result), width='stretch',
-                    config={'displaylogo': False})
+    if not winners:
+        rule()
+        one_race_panel(result, run_entry)
+        return
 
-    with st.expander('How this race was picked'):
-        st.markdown(
-            f'<div class="lede">Ranking every race by how likely its '
-            f'finishing order was would pick the race where nothing happened: '
-            f'a retirement puts a quick driver last, which is improbable for '
-            f'that driver, so any race with one scores badly. Instead the '
-            f'events are held fixed first and likelihood only breaks the '
-            f'tie.</div>', unsafe_allow_html=True)
-        st.markdown(''.join(
-            '<div class="paramrow"><div class="name">' + name + '</div>'
-            '<div style="color:' + MUTED + ';font-size:0.78rem">' + note
-            + '</div><div class="val" style="text-align:left">' + str(value)
-            + '</div></div>'
-            for name, value, note in [
-                ('Simulation', f'#{report["sim"]:,}',
-                 f'of {result["n_sims"]:,}'),
-                ('Event profile',
-                 f'{report["modal_retired"]} retirement(s), '
-                 f'SC {"yes" if report["modal_sc"] else "no"}',
-                 'the profile most races in this run had'),
-                ('Matching races', f'{report["pool"]:,}',
-                 'the pool this one was chosen from'),
-                ('Shortlisted', f'{report["candidates"]}',
-                 'top of that pool by likelihood'),
-                ('Likelihood', f'{report["loglik_percentile"]:.1%}',
-                 'percentile within the pool, finishers only'),
-            ]), unsafe_allow_html=True)
+    labels = ['Typical race'] + [f'{w["driver"]}  {w["share"]:.1%}'
+                                 for w in winners]
+    pages = st.tabs(labels)
+    with pages[0]:
+        st.caption('Chosen from every race in the run, whoever won it.')
+        one_race_panel(result, run_entry)
+
+    for page, entry in zip(pages[1:], winners):
+        with page:
+            st.caption(
+                f'The race {entry["driver"]} wins that best stands for the '
+                f'{entry["wins"]:,} of {result["n_sims"]:,} they win - '
+                f'{entry["share"]:.2%} of the run.')
+            one_race_panel(result, entry, winner_view=True)
 
 
 # --- main -------------------------------------------------------------------
@@ -1701,6 +1867,25 @@ def main():
                 result['run'] = PIPE.run_summary(
                     S, result, time.perf_counter() - started,
                     settings['n_sims'], result['n_sims'], 'complete')
+
+                # One representative race per driver who wins any, computed
+                # here rather than per page view: the selection reads the
+                # whole position matrix once per winner, and Streamlit would
+                # otherwise repeat all of it on every click. Measured at
+                # 0.24 s for fifteen winners over ten thousand races.
+                stage.markdown('<div class="lede">picking representative '
+                               'races</div>', unsafe_allow_html=True)
+                winner_races = REP.for_each_winner(result,
+                                                   S.rebuild_compounds)
+                for entry in winner_races:
+                    entry['figures'] = build_race_figures(result, entry)
+                # The run's own typical race is a page like any other and
+                # would otherwise be the one thing still rebuilt per click.
+                typical_race = {'report': result['report'],
+                                'trace': result['trace'],
+                                'stints': result['stints'], 'driver': 'run'}
+                typical_race['figures'] = build_race_figures(result,
+                                                             typical_race)
             finally:
                 S.N_SIMS, S.RANDOM_SEED = old_n, old_seed
         except Exception as exc:                       # surface, do not hide
@@ -1718,6 +1903,7 @@ def main():
         if result.get('run'):
             result['run']['stale_inputs'] = [e['artefact'] for e in stale]
             result['run']['grid_source'] = grid_source
+            result['run']['winners'] = len(winner_races)
         bar.empty()
         stage.empty()
 
@@ -1738,6 +1924,8 @@ def main():
             'run_summary': result.get('run'),
             'source': 'run in this session',
             'grid_source': grid_source,
+            'winner_races': winner_races,
+            'typical_race': typical_race,
             'changed': changed})
         st.session_state.runs = st.session_state.runs[-MAX_RUNS:]
 
@@ -1790,7 +1978,8 @@ def main():
     with tabs[4]:
         show_comparison(runs)
     with tabs[5]:
-        show_representative(current)
+        show_representative(current, runs[-1].get('winner_races'),
+                            runs[-1].get('typical_race'))
 
 
 if __name__ == '__main__':

@@ -64,9 +64,10 @@ def _colors(n):
 # --- representative race ----------------------------------------------------
 
 
-def find_representative(positions, diag, top_fraction=0.10):
+def find_representative(positions, diag, top_fraction=0.10, restrict_to=None,
+                        min_pool=50):
     """
-    Picks the single simulation that best stands for the whole set.
+    Picks the single simulation that best stands for a set of them.
 
     The obvious approach - rank every race by the joint likelihood of its
     finishing order and take the best - quietly guarantees a dull race. A
@@ -83,8 +84,27 @@ def find_representative(positions, diag, top_fraction=0.10):
     Likelihood then decides between them, computed over the drivers who
     actually finished so that the retirement itself is not penalised, and a
     median-distance tiebreak keeps the pace of the race typical too.
+
+    Restricting to a subset
+    -----------------------
+    `restrict_to` narrows the search to a set of simulation indices - the races
+    one driver won, say - and the answer never leaves it. The modal profile is
+    then read from that subset too, because "a typical race this driver wins"
+    is a different question from "a typical race": a driver who only ever wins
+    from a safety car should be shown one.
+
+    What is deliberately *not* narrowed is the position-probability table the
+    likelihood is scored against. That stays over every simulation, because it
+    is the distribution the model actually predicts. Recomputing it inside a
+    subset of eleven races would score each order against a handful of
+    observations of itself, and the "most likely" race would be an artefact of
+    the sample size rather than anything the model said.
     """
     n_sims, n_drivers = positions.shape
+    universe = (np.arange(n_sims) if restrict_to is None
+                else np.asarray(restrict_to, dtype=int))
+    if len(universe) == 0:
+        raise ValueError('no simulations to choose from')
 
     retired = diag.get('retired')
     neutral = diag.get('neutral')
@@ -94,15 +114,22 @@ def find_representative(positions, diag, top_fraction=0.10):
     n_sc = ((neutral == 2).any(axis=1).astype(int) if neutral is not None
             else np.zeros(n_sims, dtype=int))
 
-    # the profile most races actually have, not the tidiest one
-    modal_retired = int(np.bincount(n_retired).argmax())
-    modal_sc = int(np.bincount(n_sc).argmax())
+    # the profile most races in the universe actually have, not the tidiest one
+    modal_retired = int(np.bincount(n_retired[universe]).argmax())
+    modal_sc = int(np.bincount(n_sc[universe]).argmax())
 
-    pool = np.flatnonzero((n_retired == modal_retired) & (n_sc == modal_sc))
-    if len(pool) < 50:                      # too strict, drop the SC condition
-        pool = np.flatnonzero(n_retired == modal_retired)
-    if len(pool) < 50:
-        pool = np.arange(n_sims)
+    # Every relaxation stays inside the universe. Falling back to all
+    # simulations would hand back a race the restriction excluded - for a
+    # per-winner view, a race that driver did not win.
+    matches_both = universe[(n_retired[universe] == modal_retired)
+                            & (n_sc[universe] == modal_sc)]
+    matches_retired = universe[n_retired[universe] == modal_retired]
+
+    pool = matches_both
+    if len(pool) < min(min_pool, len(universe)):
+        pool = matches_retired                # too strict, drop the SC condition
+    if len(pool) < min(min_pool, len(universe)):
+        pool = universe
 
     counts = np.zeros((n_drivers, n_drivers))
     for i in range(n_drivers):
@@ -145,6 +172,12 @@ def find_representative(positions, diag, top_fraction=0.10):
         'loglik': float(loglik[best]),
         'loglik_percentile': float((loglik[pool] < loglik[best]).mean()),
         'pool': len(pool),
+        # How many races the search was allowed to look at before the event
+        # profile narrowed it. Equal to the simulation count unless restricted,
+        # and the honest denominator for a per-winner view: "typical of the
+        # eleven races this driver won" is a different claim from "typical".
+        'universe': len(universe),
+        'restricted': restrict_to is not None,
         'candidates': len(candidates),
         'modal_retired': modal_retired,
         'modal_sc': modal_sc,

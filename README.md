@@ -156,6 +156,7 @@ Simülasyon/                 the model, and the one entry point to it
   simulate.py               the race model, and run() for the interface
   reactive_strategy.py      when to pit, priced against rivals and traffic
   starts.py                 the start and lap one, measured
+  representative.py         a typical race, and one per winning driver
   race_select.py            predicting any 2026 round that has qualified
   weather.py                rain, a drying track, and the tyre that suits it
   dnf.py                    accidents, failures, and the flags they bring out
@@ -274,7 +275,7 @@ python -m Simülasyon.tests.test_parameters            # 25
 python -m Simülasyon.tests.test_pipeline              # 22
 python -m Simülasyon.tests.test_backtest              # 33
 python -m Simülasyon.tests.test_starts                # 17
-python -m Simülasyon.tests.test_frontend              # 33
+python -m Simülasyon.tests.test_frontend              # 50
 python -m Simülasyon.tests.test_race_select           # 21
 python -m Simülasyon.Tyre_model.test_tyre_curve # 58
 ```

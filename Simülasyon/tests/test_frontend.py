@@ -241,7 +241,9 @@ def test_the_page_renders_a_run_without_raising():
     at = _rendered()
     assert len(at.exception) == 0, [e.value for e in at.exception]
     assert len(at.error) == 0, [e.value for e in at.error]
-    assert len(at.tabs) == 6
+    # six top-level tabs, plus one sub-page per winner and one for the run's
+    # own typical race inside the last of them
+    assert len(at.tabs) > 6
 
 
 def test_the_default_table_is_seven_columns_not_thirteen():
@@ -504,6 +506,167 @@ def test_a_result_without_traces_says_so_instead_of_raising():
     stripped = {'n_sims': 100, 'report': None, 'trace': None,
                 'pace': pd.DataFrame({'Driver': ['AAA']})}
     APP.show_representative(stripped)        # must not raise
+
+
+# --- a race per winner ------------------------------------------------------
+
+def test_every_winner_page_shows_a_race_that_driver_won():
+    """
+    The property the whole feature rests on. A page headed HAM showing a race
+    LEC won would be wrong in a way nothing else here would catch: the chart
+    is valid, the numbers are real, and only the name is a lie.
+    """
+    from Simülasyon import simulate as S
+    from Simülasyon import representative as REP
+
+    S.N_SIMS = 1500
+    result = S.run()
+    drivers = list(result['pace']['Driver'])
+    positions = np.asarray(result['positions'])
+
+    for entry in REP.for_each_winner(result, S.rebuild_compounds):
+        assert positions[entry['sim'], entry['driver_idx']] == 1, entry['driver']
+        # and again from the lap trace, which is what actually gets drawn
+        leader = drivers[int(np.asarray(entry['trace']['order'])[-1][0])]
+        assert leader == entry['driver'], (leader, entry['driver'])
+
+
+def test_the_search_never_leaves_the_races_a_driver_won():
+    """
+    find_representative relaxes its event conditions when the pool is thin.
+    Relaxing all the way to every simulation - which is what it does
+    unrestricted - would hand back a race the driver lost.
+    """
+    from Simülasyon import simulate as S
+    from Simülasyon import representative as REP
+    from Simülasyon.diagnostics import find_representative
+
+    S.N_SIMS = 1500
+    result = S.run()
+    positions = np.asarray(result['positions'])
+
+    # a rare winner, where every relaxation step will be triggered
+    rare = min(REP.winners(positions, list(result['pace']['Driver'])),
+               key=lambda row: row['wins'])
+    won = REP.races_won_by(positions, rare['driver_idx'])
+    sim, report = find_representative(positions, result['diag'],
+                                      restrict_to=won)
+    assert sim in set(won.tolist())
+    assert report['universe'] == len(won)
+    assert report['pool'] <= len(won)
+
+
+def test_an_unrestricted_search_is_unchanged():
+    """The single representative race must not move because the API grew."""
+    from Simülasyon import simulate as S
+    from Simülasyon.diagnostics import find_representative
+
+    S.N_SIMS = 1200
+    result = S.run()
+    again, report = find_representative(result['positions'], result['diag'])
+    assert again == result['rep']
+    assert report['universe'] == result['n_sims']
+    assert report['restricted'] is False
+
+
+def test_winners_are_ranked_by_wins_and_carry_their_share():
+    """
+    The share is what keeps fifteen named pages from reading as fifteen
+    plausible Sundays.
+    """
+    from Simülasyon import simulate as S
+    from Simülasyon import representative as REP
+
+    S.N_SIMS = 1500
+    result = S.run()
+    rows = REP.winners(result['positions'], list(result['pace']['Driver']))
+
+    assert rows == sorted(rows, key=lambda r: (-r['wins'], r['driver']))
+    assert all(r['wins'] >= 1 for r in rows)
+    for row in rows:
+        assert abs(row['share'] - row['wins'] / result['n_sims']) < 1e-12
+    assert abs(sum(r['share'] for r in rows) - 1.0) < 1e-9
+
+
+def test_a_driver_who_never_wins_gets_no_page():
+    from Simülasyon import simulate as S
+    from Simülasyon import representative as REP
+
+    S.N_SIMS = 1200
+    result = S.run()
+    positions = np.asarray(result['positions'])
+    named = {r['driver'] for r in
+             REP.winners(positions, list(result['pace']['Driver']))}
+    drivers = list(result['pace']['Driver'])
+    for i, code in enumerate(drivers):
+        if (positions[:, i] == 1).sum() == 0:
+            assert code not in named
+
+
+# --- tyres and stops --------------------------------------------------------
+
+def test_the_stint_chart_covers_every_lap_each_car_ran():
+    """
+    A gap between bars would be a lap the car was neither on a tyre nor
+    retired, which is not a thing that happens.
+    """
+    result = _traced()
+    by_driver = {}
+    for stint in result['stints']:
+        by_driver.setdefault(stint['driver_idx'], []).append(stint)
+
+    retired_lap = np.asarray(result['trace']['retired_lap'])
+    n_laps = result['trace']['order'].shape[0]
+    for driver, stints in by_driver.items():
+        stints.sort(key=lambda s: s['start'])
+        assert stints[0]['start'] == 1, driver
+        for before, after in zip(stints, stints[1:]):
+            assert after['start'] == before['end'] + 1, (driver, before, after)
+        last = (int(retired_lap[driver]) + 1 if retired_lap[driver] >= 0
+                else n_laps)
+        assert stints[-1]['end'] == last, (driver, stints[-1]['end'], last)
+
+
+def test_every_stint_gets_a_colour():
+    """An unmapped compound would draw grey and read as a tyre of its own."""
+    result = _traced()
+    for stint in result['stints']:
+        assert str(stint['compound']) in APP.COMPOUND_COLOUR, stint['compound']
+
+
+def test_the_stint_chart_rows_are_ordered_by_finish():
+    result = _traced()
+    figure = APP.stint_chart(result)
+
+    # tickvals and ticktext pair element by element, and both are emitted in
+    # driver-index order rather than in row order. Reading ticktext alone says
+    # nothing about what sits where; the row number is in tickvals.
+    rows = dict(zip(figure.layout.yaxis.ticktext,
+                    figure.layout.yaxis.tickvals))
+
+    position = APP.lap_positions(result)
+    drivers = list(result['pace']['Driver'])
+    finish = position[-1]
+    n = len(drivers)
+    order = np.argsort(np.where(np.isnan(finish), n + 1, finish))
+
+    # highest row is the top of the chart, and the winner belongs there
+    top = max(rows, key=rows.get)
+    assert top == drivers[order[0]], (top, drivers[order[0]])
+
+    # and the order runs monotonically down from there
+    ranked = [drivers[i] for i in order]
+    assert [rows[name] for name in ranked] == sorted(
+        (rows[name] for name in ranked), reverse=True)
+
+
+def test_a_retirement_is_marked_on_the_stint_chart():
+    result = _traced()
+    retired_lap = np.asarray(result['trace']['retired_lap'])
+    if not (retired_lap >= 0).any():
+        return
+    names = [t.name for t in APP.stint_chart(result).data]
+    assert 'retired' in names
 
 
 def _run():

@@ -669,6 +669,51 @@ def test_a_retirement_is_marked_on_the_stint_chart():
     assert 'retired' in names
 
 
+# --- compound colours and same-compound pit stops ---------------------------
+
+def test_compound_colours_match_the_broadcast_convention():
+    """Soft red, medium yellow, hard white - what every timing screen uses."""
+    soft = APP.COMPOUND_COLOUR['SOFT'].lstrip('#')
+    medium = APP.COMPOUND_COLOUR['MEDIUM'].lstrip('#')
+    hard = APP.COMPOUND_COLOUR['HARD'].lstrip('#')
+
+    r, g, b = int(soft[0:2], 16), int(soft[2:4], 16), int(soft[4:6], 16)
+    assert r > 150 and g < 100 and b < 100, 'SOFT is not red'
+
+    r, g, b = int(medium[0:2], 16), int(medium[2:4], 16), int(medium[4:6], 16)
+    assert r > 200 and g > 180 and b < 100, 'MEDIUM is not yellow'
+
+    r, g, b = int(hard[0:2], 16), int(hard[2:4], 16), int(hard[4:6], 16)
+    assert r > 220 and g > 220 and b > 220, 'HARD is not white'
+
+
+def test_a_same_compound_pit_stop_gets_a_marker_not_just_a_seam():
+    """
+    Two adjacent bars in the same fill colour are the case a border alone
+    cannot reliably announce - the triangle is what actually says "pit here".
+    """
+    from Simülasyon.diagnostics import build_stints
+
+    n_laps = 40
+    compounds = np.empty((n_laps, 1), dtype=object)
+    compounds[:20, 0] = 'HARD'
+    compounds[20:, 0] = 'HARD'
+    pits = np.zeros((n_laps, 1), dtype=bool)
+    pits[19, 0] = True
+
+    result = _traced()
+    stints = build_stints(compounds, pits, codes=['XXX'])
+    fake = {'pace': result['pace'], 'trace': result['trace'], 'stints': stints}
+    # lap_positions/stint_chart only need trace for order/pits/retired_lap of
+    # the real run's driver count; reuse it and just substitute the stints.
+    figure = APP.stint_chart(result, result['trace'], stints)
+
+    names = [t.name for t in figure.data]
+    assert 'pit stop' in names
+    pit_trace = figure.data[names.index('pit stop')]
+    assert 20 in list(pit_trace.x)
+
+
 def _run():
     tests = [(n, f) for n, f in sorted(globals().items())
              if n.startswith('test_') and callable(f)]

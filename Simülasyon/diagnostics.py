@@ -197,6 +197,19 @@ def build_stints(compound_by_lap, pits_by_lap, codes, retired_lap=None):
     retired_lap ends a driver's race early. Without it a car that parked on lap
     30 still showed a bar running to the flag, which read as a quiet run to the
     end rather than a retirement.
+
+    A stint ends on a pit stop, not only on a compound change. `pits_by_lap`
+    was accepted and ignored - the boundary was inferred from the compound
+    alone, so a stop that fitted the same compound again (a splash-and-dash,
+    or ENFORCE_STINT_CAP forcing a fresh set at the cap because nothing else
+    was left to spend) drew as one uninterrupted bar. A car observed 46 laps
+    into a tyre the curve was fitted to for 22 was not a modelling error; it
+    was two stints on the same compound merged into a rectangle by a chart
+    that only looked at colour.
+
+    `pits_by_lap[i, d]` is True when driver d pits on the lap array index i
+    represents - the same per-lap indexing compound_by_lap already uses - so
+    the two arrays are read at the same position with no conversion needed.
     """
     n_laps, n_drivers = compound_by_lap.shape
     stints = []
@@ -210,7 +223,12 @@ def build_stints(compound_by_lap, pits_by_lap, codes, retired_lap=None):
 
         start = 0
         for lap in range(1, last + 1):
-            ends = lap == last or compound_by_lap[lap, d] != compound_by_lap[start, d]
+            # lap - 1 is always a valid index here: lap ranges 1..last and
+            # last <= n_laps, so lap - 1 ranges 0..n_laps - 1.
+            pitted = bool(pits_by_lap[lap - 1, d])
+            ends = (lap == last
+                    or compound_by_lap[lap, d] != compound_by_lap[start, d]
+                    or pitted)
             if ends:
                 stints.append({
                     'driver': codes[d],

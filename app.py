@@ -77,16 +77,16 @@ ATTENTION = '#b4541f'       # reserved for hand-set and fallback only
 HEAT = [[0.0, '#f7f8fa'], [0.15, '#dce4ed'], [0.35, '#a9bed4'],
         [0.6, '#6e90b4'], [0.8, '#43678f'], [1.0, ACCENT]]
 
-# Compounds run along the same accent ramp, softest darkest, because softness
-# is an ordered quantity and the ramp already reads as one. Broadcast red and
-# yellow would be the louder convention and would also be the only place on
-# the page where colour is decoration rather than information.
-#
-# The wets leave the ramp: they are not a step further along the same scale,
-# they are a different afternoon, so they get a hue of their own.
+# The broadcast convention, not the page's own accent ramp: red-yellow-white
+# is printed on the sidewall and shown on every timing screen, and matching it
+# is worth breaking the one-accent rule for. A viewer already knows these.
+# Hard is white on the tyre and would be invisible on this page's white
+# ground with no outline, so every stint bar in stint_chart() below carries a
+# dark border regardless of fill - not only where white needs it, so the
+# border itself does not become a second code to read.
 COMPOUND_COLOUR = {
-    'SOFT': ACCENT, 'MEDIUM': '#6e90b4', 'HARD': '#c3cdda',
-    'INTERMEDIATE': '#4f7f5f', 'WET': '#2f5f5f',
+    'SOFT': '#da291c', 'MEDIUM': '#ffd400', 'HARD': '#f2f2f2',
+    'INTERMEDIATE': '#43b02a', 'WET': '#0067ad',
 }
 
 BADGE_STYLE = {
@@ -1445,8 +1445,14 @@ def stint_chart(result, trace=None, stints=None):
         fig.add_trace(go.Bar(
             x=[stint['length']], y=[row_of[driver]], base=[stint['start'] - 1],
             orientation='h', width=0.64,
+            # A fixed dark border rather than a GROUND-coloured one: two
+            # consecutive stints on the same compound - a same-tyre pit stop -
+            # are adjacent bars in the same fill colour, and a white seam on a
+            # near-white HARD bar or a thin one against SOFT's red was not a
+            # reliable boundary. This one holds regardless of what is on
+            # either side of it.
             marker=dict(color=COMPOUND_COLOUR.get(compound, '#9aa3ae'),
-                        line=dict(color=GROUND, width=1)),
+                        line=dict(color=INK, width=1.4)),
             name=compound, legendgroup=compound,
             showlegend=compound not in seen,
             hovertemplate=f'{stint["driver"]} &nbsp; {compound.lower()}<br>'
@@ -1454,6 +1460,22 @@ def stint_chart(result, trace=None, stints=None):
                           f'({stint["length"]})<extra></extra>',
         ))
         seen.add(compound)
+
+    # Pit stops as an explicit mark, not only the seam between two bars. A
+    # same-compound stop is two adjacent bars in identical fill, and a border
+    # alone reads as decoration rather than as an event; a marker is a
+    # positive claim the border cannot make on its own.
+    pitted = [s for s in stints if s.get('pit_lap') is not None]
+    if pitted:
+        fig.add_trace(go.Scatter(
+            x=[s['pit_lap'] for s in pitted],
+            y=[row_of[s['driver_idx']] for s in pitted],
+            mode='markers',
+            marker=dict(symbol='triangle-down', size=7, color=INK,
+                        line=dict(color=GROUND, width=0.5)),
+            name='pit stop', showlegend=True,
+            hovertemplate=[f'{s["driver"]} pits, lap {s["pit_lap"]}'
+                           f'<extra></extra>' for s in pitted]))
 
     # A retirement ends the bar early, and without a mark that is
     # indistinguishable from a short final stint.
@@ -1528,8 +1550,11 @@ def one_race_panel(result, entry, winner_view=False):
     eyebrow('tyres and stops')
     st.markdown(
         '<div class="lede">One row per car, ordered by where it finished. '
-        'Each bar is a stint and its colour is the tyre; a boundary between '
-        'two bars is a pit stop.</div>', unsafe_allow_html=True)
+        'Each bar is a stint, coloured to match the tyre - soft red, medium '
+        'yellow, hard white, the same convention every broadcast uses. A '
+        'triangle marks every pit stop, including one that returns the same '
+        'compound: two bars in the same colour are still two stints.</div>',
+        unsafe_allow_html=True)
     st.plotly_chart(figures['stints'],
                     width='stretch', config={'displaylogo': False},
                     key=f'stint_{entry.get("driver", "run")}_{report["sim"]}')

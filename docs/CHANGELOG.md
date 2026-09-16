@@ -1,5 +1,25 @@
 # Changelog
 
+## Stint chart: a same-compound pit stop is two stints, not one
+
+`build_stints` accepted `pits_by_lap` and never read it - a stint ended only
+when the compound changed, so a stop that fitted the same compound again (a
+splash-and-dash, or `ENFORCE_STINT_CAP` forcing a fresh set because nothing
+else was left to spend) drew as one uninterrupted bar. At the Spanish Grand
+Prix this showed a driver on a 49-lap MEDIUM stint against a curve fitted for
+32 - the tyre model was never wrong, the chart was silently merging two real
+stints (25 and 24 laps, a stop at lap 25) into one rectangle. Verified against
+the model's own cap: no stint in a fresh run now exceeds what its compound was
+measured for.
+
+Tyre colours moved to the broadcast convention - soft red, medium yellow, hard
+white - from the page's own accent ramp. Pit stops get an explicit marker
+rather than relying on the seam between two bars, which was not a reliable
+boundary when both bars were the same fill colour.
+
+Eight tests in `test_diagnostics.py`, plus two more in `test_frontend.py` for
+the colours and the marker.
+
 ## v2.7 - the start, measured
 
 The grid no longer simply holds through lap one. Cars draw a start, the draw is

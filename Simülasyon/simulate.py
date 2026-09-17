@@ -512,6 +512,32 @@ TEAM_PASS_ENABLED = True
 TEAM_PASS_COEF = 0.118       # logit per PC1 unit
 TEAM_PASS_CAP = 0.40         # logit, either way
 
+# --- team orders (v2.8) ---
+# Two cars from the same team are not two independent entries racing each
+# other for nothing. The pit wall coordinates them, in two separate ways:
+#
+# It will not stack them. If both cars from a team would pit on the same lap,
+# real teams bring the front car in and hold the rear one out - the second
+# jack is not free, and queuing both through it costs more than the tyre is
+# worth. Whichever of the two is behind on the road that lap is delayed by
+# one lap; its own decision (due, opportunistic, reactive or a weather
+# change) still stands, it is just not taken this lap. A cap-forced stop
+# (ENFORCE_STINT_CAP) is never delayed - the cap exists because the curve was
+# never fitted past that age, and delaying it asks the tyre a question the
+# data cannot answer.
+DOUBLE_STACK_ENABLED = True
+
+# It will not let the rear car dice past the front one on track while they
+# are both running the same plan. Two teammates nose-to-tail, on the same
+# compound within this many laps of age, are treated as holding station
+# rather than fighting: the wheel-to-wheel dice roll in the overtake sweep is
+# switched off between them. A position change that comes from a genuine
+# strategy difference - one of them pitting, retiring, or already clear by
+# AUTO_PASS_MARGIN - still happens; only the contested pass is suppressed, so
+# an undercut against a teammate on a different plan is not blocked by this.
+TEAM_ORDERS_ENABLED = True
+TEAM_ORDER_AGE_TOLERANCE = 3     # laps
+
 STRATEGY_TEMPERATURE = 1.0
 MAX_STRATEGIES = 8
 
@@ -1528,6 +1554,77 @@ def team_pass_shift(pace):
     return shift, f'PC1 x {TEAM_PASS_COEF:.3f} ({hit}/{len(pace)} cars)'
 
 
+def team_pairs(team_of):
+    """
+    Every pair of teammates, as (i, j) index pairs into the driver arrays.
+
+    A team of two gives one pair. Nothing here assumes exactly two - a
+    three-car entry would give three pairs, each handled independently -
+    so this does not need to change if that ever happens.
+    """
+    pairs = []
+    for team in pd.unique(team_of):
+        idx = np.flatnonzero(team_of == team)
+        for x in range(len(idx)):
+            for y in range(x + 1, len(idx)):
+                pairs.append((int(idx[x]), int(idx[y])))
+    return pairs
+
+
+def apply_double_stack_delay(pitting, stack_delay, total, retired, pairs):
+    """
+    Keeps two teammates from pitting on the same lap.
+
+    A real pit wall will not queue both cars through one jack: it brings the
+    front car in and holds the rear one out a lap. `pitting` is this lap's
+    decision (due, opportunistic, reactive or weather - not a cap-forced
+    stop, which is never delayed); `stack_delay` is last lap's holds, taken
+    now unconditionally since the decision that earned them still stands.
+
+    total is the running order from before this lap's time is added - which
+    of the two is ahead on the road right now, the question the pit wall
+    actually asks. Returns the adjusted pitting and the delay to carry into
+    the next lap.
+    """
+    pitting = pitting | stack_delay
+    next_delay = np.zeros_like(stack_delay)
+    for i, j in pairs:
+        both = pitting[:, i] & pitting[:, j] & ~retired[:, i] & ~retired[:, j]
+        if not both.any():
+            continue
+        i_leads = total[:, i] <= total[:, j]
+        delay_i = both & ~i_leads
+        delay_j = both & i_leads
+        pitting[:, i] = pitting[:, i] & ~delay_i
+        pitting[:, j] = pitting[:, j] & ~delay_j
+        next_delay[:, i] = next_delay[:, i] | delay_i
+        next_delay[:, j] = next_delay[:, j] | delay_j
+    return pitting, next_delay
+
+
+def team_order_hold(front_car, rear_car, team_of, fitted, tyre_age, sim_idx,
+                    age_tolerance):
+    """
+    True where two nose-to-tail cars are teammates on the same plan.
+
+    front_car and rear_car are the driver index currently in each of two
+    adjacent running-order slots, one entry per simulation. Same team, same
+    fitted compound, and stint ages within age_tolerance of each other reads
+    as "the same plan" - close enough that neither car is quicker because of
+    strategy rather than talent, which is the only case a team asks its two
+    drivers to hold position rather than race.
+    """
+    same_team = team_of[front_car] == team_of[rear_car]
+    front_fit = fitted[sim_idx, front_car]
+    rear_fit = fitted[sim_idx, rear_car]
+    front_age = tyre_age[sim_idx, front_car]
+    rear_age = tyre_age[sim_idx, rear_car]
+    same_plan = (front_fit == rear_fit) & (
+        np.abs(front_age.astype(np.int64) - rear_age.astype(np.int64))
+        <= age_tolerance)
+    return same_team & same_plan
+
+
 def build_start_gaps(order_positions, n_drivers, track, rng, shape,
                      lock_order=True):
     """
@@ -1808,6 +1905,11 @@ def run_simulation(pace, track, strategies, n_sims, seed=None,
         traffic_laps=V2_TRAFFIC_LAPS)
     driver_names = pace['Driver'].to_numpy()
     ranks0 = np.broadcast_to(np.arange(n_drivers), shape)
+    sim_idx = np.arange(n_sims)
+
+    team_of = pace['Team'].to_numpy()
+    TEAM_PAIRS = team_pairs(team_of)
+    stack_delay = np.zeros(shape, dtype=bool)
 
     dirty_penalty = np.zeros(shape)
 
@@ -2143,6 +2245,10 @@ def run_simulation(pace, track, strategies, n_sims, seed=None,
 
         pitting = due | opportunistic | reactive | weather_switch
 
+        if DOUBLE_STACK_ENABLED and TEAM_PAIRS:
+            pitting, stack_delay = apply_double_stack_delay(
+                pitting, stack_delay, total, retired, TEAM_PAIRS)
+
         if ENFORCE_STINT_CAP:
             # Nobody has ever run this compound this long here, so neither
             # does the simulation.
@@ -2355,6 +2461,20 @@ def run_simulation(pace, track, strategies, n_sims, seed=None,
                                  & ~ord_pitting[:, p]
                                  & ~ord_out[:, p]
                                  & racing)
+
+                    if TEAM_ORDERS_ENABLED and TEAM_PAIRS:
+                        # Nose-to-tail teammates on the same plan hold
+                        # station: the dice roll below is what represents a
+                        # driver fighting for the place, and a team does not
+                        # let its own two cars do that. Nothing here stops a
+                        # position changing for a real reason - pitting,
+                        # retiring or a gap already open falls under
+                        # `uncontested` above and is untouched.
+                        hold = team_order_hold(
+                            order[:, p - 1], order[:, p], team_of, fitted,
+                            tyre_age, sim_idx, TEAM_ORDER_AGE_TOLERANCE)
+                        attacking = attacking & ~hold
+
                     advantage = ord_pace[:, p - 1] - ord_pace[:, p]
                     # order[:, p] is the driver index in the slot behind, so
                     # the team term follows the cars through the sweep
@@ -3029,6 +3149,12 @@ RUNTIME_FLAGS = {
                          'not only by its pace advantage.',
     'TEAM_PASS_ENABLED': 'Let a team\'s measured overtaking strength (PC1) '
                          'move its pass odds.',
+    'DOUBLE_STACK_ENABLED': 'Delay whichever of two teammates is behind on '
+                            'the road one lap, rather than pit both through '
+                            'the same stop.',
+    'TEAM_ORDERS_ENABLED': 'Hold station between two teammates running '
+                           'nose-to-tail on the same tyre and a similar '
+                           'age - no dice roll for the place between them.',
     'IS_WET': 'Raise the safety-car rate for a wet race. Superseded by the '
               'v2.1 weather model, which changes the race itself.',
     'WEATHER_ENABLED': 'Let it rain: a track that wets and dries with a lag, '

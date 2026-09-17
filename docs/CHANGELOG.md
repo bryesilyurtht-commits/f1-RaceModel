@@ -1,5 +1,37 @@
 # Changelog
 
+## Team orders: no double stacking, no teammate dicing on the same plan
+
+Two teammates were racing each other exactly like two rivals. Real teams do
+not: the pit wall will not queue both cars through one jack, and it will not
+let the rear car dice past the front one on track while both are running the
+same plan.
+
+**No double stacking.** If both cars from a team would pit on the same lap,
+whichever is behind on the road is held out one lap - its own decision
+(due, opportunistic, reactive, or a weather change) still stands, it is just
+not taken this lap. A cap-forced stop (`ENFORCE_STINT_CAP`) is never
+delayed: the cap exists because the curve was never fitted past that age,
+and asking a tyre to run one lap longer than the data covers is the thing
+the cap was built to prevent. Checked directly: across a full field and a
+real strategy mix, zero same-lap stops survive between two teammates who are
+both still racing.
+
+**No teammate dicing on the same plan.** Two cars nose-to-tail, same team,
+on the same tyre compound within three laps of age, no longer get a dice
+roll for the place between them - the wheel-to-wheel pass model that
+decides every other fight on the grid is switched off for that one pair,
+that one lap. Nothing about a genuine strategy difference is touched: a
+teammate on a different compound, or one that just pitted or retired, still
+changes the order exactly as before. An undercut against your own teammate
+still works; racing past them for no reason does not.
+
+Both mechanisms are pure functions - `apply_double_stack_delay` and
+`team_order_hold` in `simulate.py` - independently unit-tested against
+synthetic arrays, plus whole-race checks in `test_team_orders.py` (13
+tests). Both are runtime flags (`DOUBLE_STACK_ENABLED`, `TEAM_ORDERS_ENABLED`),
+on by default, visible in the Parameters tab under Racing.
+
 ## Stint chart: a gap at every pit, not just a border
 
 The previous fix split same-compound pit stops into two bars correctly, but

@@ -278,6 +278,7 @@ python -m Simülasyon.tests.test_starts                # 17
 python -m Simülasyon.tests.test_frontend              # 53
 python -m Simülasyon.tests.test_race_select           # 23
 python -m Simülasyon.tests.test_diagnostics           # 8
+python -m Simülasyon.tests.test_team_orders           # 13
 python -m Simülasyon.Tyre_model.test_tyre_curve # 58
 ```
 

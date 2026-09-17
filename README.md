@@ -275,7 +275,7 @@ python -m Simülasyon.tests.test_parameters            # 25
 python -m Simülasyon.tests.test_pipeline              # 24
 python -m Simülasyon.tests.test_backtest              # 33
 python -m Simülasyon.tests.test_starts                # 17
-python -m Simülasyon.tests.test_frontend              # 52
+python -m Simülasyon.tests.test_frontend              # 53
 python -m Simülasyon.tests.test_race_select           # 23
 python -m Simülasyon.tests.test_diagnostics           # 8
 python -m Simülasyon.Tyre_model.test_tyre_curve # 58

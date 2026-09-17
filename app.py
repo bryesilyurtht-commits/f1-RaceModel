@@ -1437,22 +1437,29 @@ def stint_chart(result, trace=None, stints=None):
     row_of = {driver: n_drivers - 1 - order.index(driver)
               for driver in range(n_drivers)}
 
+    # A gap cut into every bar at both ends, not just a border between them.
+    # Colour alone was never going to separate two HARD bars from each other,
+    # and a border a couple of pixels wide reads as decoration at the zoom
+    # level the page actually renders at - a same-compound pit stop still
+    # looked like one uninterrupted tyre. A gap is not decoration: there is a
+    # visible strip of the page background at every real stint boundary,
+    # coloured bar or not, so the eye finds the pit before it reads the tyre.
+    # Capped at a third of the stint so a one-lap splash-and-dash still draws
+    # as a bar rather than disappearing into its own margins.
+    INSET = 0.16
+
     fig = go.Figure()
     seen = set()
     for stint in stints:
         driver = stint['driver_idx']
         compound = str(stint['compound'])
+        inset = min(INSET, stint['length'] / 3)
         fig.add_trace(go.Bar(
-            x=[stint['length']], y=[row_of[driver]], base=[stint['start'] - 1],
+            x=[stint['length'] - 2 * inset], y=[row_of[driver]],
+            base=[stint['start'] - 1 + inset],
             orientation='h', width=0.64,
-            # A fixed dark border rather than a GROUND-coloured one: two
-            # consecutive stints on the same compound - a same-tyre pit stop -
-            # are adjacent bars in the same fill colour, and a white seam on a
-            # near-white HARD bar or a thin one against SOFT's red was not a
-            # reliable boundary. This one holds regardless of what is on
-            # either side of it.
             marker=dict(color=COMPOUND_COLOUR.get(compound, '#9aa3ae'),
-                        line=dict(color=INK, width=1.4)),
+                        line=dict(color=INK, width=1)),
             name=compound, legendgroup=compound,
             showlegend=compound not in seen,
             hovertemplate=f'{stint["driver"]} &nbsp; {compound.lower()}<br>'
@@ -1552,8 +1559,10 @@ def one_race_panel(result, entry, winner_view=False):
         '<div class="lede">One row per car, ordered by where it finished. '
         'Each bar is a stint, coloured to match the tyre - soft red, medium '
         'yellow, hard white, the same convention every broadcast uses. A '
-        'triangle marks every pit stop, including one that returns the same '
-        'compound: two bars in the same colour are still two stints.</div>',
+        'triangle marks every pit stop, and every stint is cut back from its '
+        'neighbour so the gap between two bars is visible even when they are '
+        'the same colour: two bars in the same colour are still two '
+        'stints.</div>',
         unsafe_allow_html=True)
     st.plotly_chart(figures['stints'],
                     width='stretch', config={'displaylogo': False},

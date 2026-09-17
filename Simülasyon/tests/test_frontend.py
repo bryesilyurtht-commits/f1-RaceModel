@@ -714,6 +714,35 @@ def test_a_same_compound_pit_stop_gets_a_marker_not_just_a_seam():
     assert 20 in list(pit_trace.x)
 
 
+def test_a_same_compound_pit_stop_leaves_a_visible_gap_between_the_bars():
+    """
+    The marker is not the only thing announcing the stop: each bar is cut
+    back from the boundary, so two HARD bars in a row never touch - the gap
+    is there whether or not a reader notices the triangle.
+    """
+    from Simülasyon.diagnostics import build_stints
+
+    n_laps = 40
+    compounds = np.empty((n_laps, 1), dtype=object)
+    compounds[:20, 0] = 'HARD'
+    compounds[20:, 0] = 'HARD'
+    pits = np.zeros((n_laps, 1), dtype=bool)
+    pits[19, 0] = True
+
+    result = _traced()
+    stints = build_stints(compounds, pits, codes=['XXX'])
+    figure = APP.stint_chart(result, result['trace'], stints)
+
+    bars = [t for t in figure.data if t.type == 'bar']
+    assert len(bars) == 2
+    first_end = bars[0].base[0] + bars[0].x[0]
+    second_start = bars[1].base[0]
+    assert second_start - first_end > 0, \
+        'no gap between two stints on the same compound'
+    # the boundary itself (lap 20) still falls inside the gap
+    assert first_end < 20 <= second_start + 1e-9
+
+
 def _run():
     tests = [(n, f) for n, f in sorted(globals().items())
              if n.startswith('test_') and callable(f)]

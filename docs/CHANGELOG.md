@@ -1,5 +1,16 @@
 # Changelog
 
+## Stint chart: a gap at every pit, not just a border
+
+The previous fix split same-compound pit stops into two bars correctly, but
+left them touching - a dark 1.4px border and a small triangle were the only
+things saying "pit here", and at the zoom level the chart actually renders
+at, two HARD bars in a row still read as one stint by eye. Each bar is now
+inset from its own boundaries (up to 0.16 laps, capped at a third of a very
+short stint), so there is a visible strip of page background at every real
+stint boundary regardless of colour. One more test in `test_frontend.py`
+checks the gap is there and sits on the pit lap.
+
 ## Stint chart: a same-compound pit stop is two stints, not one
 
 `build_stints` accepted `pits_by_lap` and never read it - a stint ended only
